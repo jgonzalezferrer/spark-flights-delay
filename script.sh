@@ -1,5 +1,5 @@
 archive=2000
-folder=project
+folder=/project
 
 mkdir -p data
 cd data
