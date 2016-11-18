@@ -10,7 +10,7 @@ var flightsDF = spark.read.format("csv").option("header", "true").load("hdfs://"
 flightsDF.printSchema
 
 // Forbidden variables
-val forbiddenVariables = Array("ArrTime", "CarrierDelay", "WeatherDelay", "NASDelay", "SecurityDelay", "LateAircraftDelay")
+val forbiddenVariables = Array("ArrTime", "CarrierDelay", "WeatherDelay", "NASDelay", "SecurityDelay", "LateAircraftDelay", "TaxiIn", "Diverted", "ActualElapsedTime", "AirTime")
 
 // Creating allowed variables extracting the forbidden variables from the original ones.
 val allowedVariables = flightsDF.columns.filter(x => !forbiddenVariables.contains(x))
