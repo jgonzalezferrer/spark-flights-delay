@@ -1,4 +1,5 @@
 import spark.implicits._
+import org.apache.spark.sql.types._
 
 val project = "/project"
 val archive = "2000"
@@ -19,4 +20,16 @@ val allowedColumns = allowedVariables.map(x => col(x))
 
 // Selecting the just the allowed columns.
 flightsDF = flightsDF.select(allowedColumns:_*)
+
+// Transforming the type of variables.
+flightsDF = flightsDF.withColumn("Year", flightsDF("Year").cast(IntegerType))
+flightsDF = flightsDF.withColumn("Month", flightsDF("Month").cast(IntegerType))
+flightsDF = flightsDF.withColumn("DayOfMonth", flightsDF("DayOfMonth").cast(IntegerType))
+flightsDF = flightsDF.withColumn("DayOfWeek", flightsDF("DayOfWeek").cast(IntegerType))
+flightsDF = flightsDF.withColumn("CRSElapsedTime", flightsDF("CRSElapsedTime").cast(IntegerType))
+flightsDF = flightsDF.withColumn("ArrDelay", flightsDF("ArrDelay").cast(IntegerType))
+flightsDF = flightsDF.withColumn("DepDelay", flightsDF("DepDelay").cast(IntegerType))
+flightsDF = flightsDF.withColumn("Distance", flightsDF("Distance").cast(IntegerType))
+flightsDF = flightsDF.withColumn("TaxiOut", flightsDF("TaxiOut").cast(IntegerType))
+flightsDF = flightsDF.withColumn("Cancelled", flightsDF("Cancelled").cast(BooleanType))
 
