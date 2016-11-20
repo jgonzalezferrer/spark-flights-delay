@@ -1,3 +1,6 @@
 *.csv
 *.csv.bz2
 *.swp
+metastore_db
+metastore_db/*
+*.log

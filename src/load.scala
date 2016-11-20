@@ -1,5 +1,7 @@
 import spark.implicits._
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.functions.unix_timestamp
+import org.apache.spark.sql.functions.{concat, lit}
 
 val project = "/project"
 val archive = "2000"
@@ -32,4 +34,19 @@ flightsDF = flightsDF.withColumn("DepDelay", flightsDF("DepDelay").cast(IntegerT
 flightsDF = flightsDF.withColumn("Distance", flightsDF("Distance").cast(IntegerType))
 flightsDF = flightsDF.withColumn("TaxiOut", flightsDF("TaxiOut").cast(IntegerType))
 flightsDF = flightsDF.withColumn("Cancelled", flightsDF("Cancelled").cast(BooleanType))
+
+
+// Let us convert these variable into TimeStamp
+flightsDF = flightsDF.withColumn("DepTime", flightsDF("DepTime").cast(IntegerType))
+flightsDF = flightsDF.withColumn("CRSDepTime", flightsDF("CRSDepTime").cast(IntegerType))
+flightsDF = flightsDF.withColumn("CRSArrtime", flightsDF("CRSArrTime").cast(IntegerType))
+
+// Given a dataframe and the name of a column (string) which has time in format hhmm, it creates a new column based on the day, month, year, hour and minute. 
+def toTimeStamp(df: org.apache.spark.sql.DataFrame, a: String) : org.apache.spark.sql.DataFrame = {
+	return df.withColumn(a+"new", unix_timestamp(concat($"DayOfMonth", lit("/"), $"Month", lit("/"), $"Year", lit(" "), col(a)), "dd/MM/yyyy HHmm").cast("timestamp"))
+}
+
+flightsDF = toTimeStamp(flightsDF, "DepTime")
+flightsDF = toTimeStamp(flightsDF, "CRSDepTime")
+flightsDF = toTimeStamp(flightsDF, "CRSArrTime")
 
