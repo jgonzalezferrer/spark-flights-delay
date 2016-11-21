@@ -43,7 +43,7 @@ flightsDF = flightsDF.withColumn("CRSArrtime", flightsDF("CRSArrTime").cast(Inte
 
 // Given a dataframe and the name of a column (string) which has time in format hhmm, it creates a new column based on the day, month, year, hour and minute. 
 def toTimeStamp(df: org.apache.spark.sql.DataFrame, a: String) : org.apache.spark.sql.DataFrame = {
-	return df.withColumn(a+"new", unix_timestamp(concat($"DayOfMonth", lit("/"), $"Month", lit("/"), $"Year", lit(" "), col(a)), "dd/MM/yyyy HHmm").cast("timestamp"))
+	return df.withColumn(a+"UnixTime", unix_timestamp(concat($"DayOfMonth", lit("/"), $"Month", lit("/"), $"Year", lit(" "), col(a)), "dd/MM/yyyy HHmm"))
 }
 
 flightsDF = toTimeStamp(flightsDF, "DepTime")
