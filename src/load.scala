@@ -50,3 +50,7 @@ flightsDF = toTimeStamp(flightsDF, "DepTime")
 flightsDF = toTimeStamp(flightsDF, "CRSDepTime")
 flightsDF = toTimeStamp(flightsDF, "CRSArrTime")
 
+// We remove the cancelled flights since they do not contain information about the target variable (ArrDelay).
+flightsDF = flightsDF.filter(col("Cancelled") === false)
+// We remove such column and the CancellationCode
+flightsDF = flightsDF.drop("Cancelled").drop("CancellationCode")
