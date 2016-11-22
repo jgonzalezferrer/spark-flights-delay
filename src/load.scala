@@ -24,39 +24,42 @@ val allowedColumns = allowedVariables.map(x => col(x))
 // Selecting the just the allowed columns.
 flightsDF = flightsDF.select(allowedColumns:_*)
 
-// Transforming the type of variables.
-flightsDF = flightsDF.withColumn("Year", flightsDF("Year").cast(IntegerType))
-flightsDF = flightsDF.withColumn("Month", flightsDF("Month").cast(IntegerType))
-flightsDF = flightsDF.withColumn("DayOfMonth", flightsDF("DayOfMonth").cast(IntegerType))
-flightsDF = flightsDF.withColumn("DayOfWeek", flightsDF("DayOfWeek").cast(IntegerType))
-flightsDF = flightsDF.withColumn("CRSElapsedTime", flightsDF("CRSElapsedTime").cast(IntegerType))
-flightsDF = flightsDF.withColumn("ArrDelay", flightsDF("ArrDelay").cast(IntegerType))
-flightsDF = flightsDF.withColumn("DepDelay", flightsDF("DepDelay").cast(IntegerType))
-flightsDF = flightsDF.withColumn("Distance", flightsDF("Distance").cast(IntegerType))
-flightsDF = flightsDF.withColumn("TaxiOut", flightsDF("TaxiOut").cast(IntegerType))
-flightsDF = flightsDF.withColumn("Cancelled", flightsDF("Cancelled").cast(BooleanType))
 
 
 // Let us convert these variable into TimeStamp
-flightsDF = flightsDF.withColumn("DepTime", flightsDF("DepTime").cast(IntegerType))
-flightsDF = flightsDF.withColumn("CRSDepTime", flightsDF("CRSDepTime").cast(IntegerType))
-flightsDF = flightsDF.withColumn("CRSArrtime", flightsDF("CRSArrTime").cast(IntegerType))
+//flightsDF = flightsDF.withColumn("DepTime", flightsDF("DepTime").cast(DoubleType))
+//flightsDF = flightsDF.withColumn("CRSDepTime", flightsDF("CRSDepTime").cast(DoubleType))
+//flightsDF = flightsDF.withColumn("CRSArrtime", flightsDF("CRSArrTime").cast(DoubleType))
 
 // Given a dataframe and the name of a column (string) which has time in format hhmm, it creates a new column based on the day, month, year, hour and minute. 
 def toTimeStamp(df: org.apache.spark.sql.DataFrame, a: String) : org.apache.spark.sql.DataFrame = {
-	return df.withColumn(a+"UnixTime", unix_timestamp(concat($"DayOfMonth", lit("/"), $"Month", lit("/"), $"Year", lit(" "), col(a)), "dd/MM/yyyy HHmm"))
+	return df.withColumn(a, unix_timestamp(concat($"DayOfMonth", lit("/"), $"Month", lit("/"), $"Year", lit(" "), col(a)), "dd/MM/yyyy HHmm"))
 }
 
-flightsDF = toTimeStamp(flightsDF, "DepTime")
+//flightsDF = toTimeStamp(flightsDF, "DepTime")
 flightsDF = toTimeStamp(flightsDF, "CRSDepTime")
 flightsDF = toTimeStamp(flightsDF, "CRSArrTime")
+
+// Transforming the type of variables.
+flightsDF = flightsDF.withColumn("Year", flightsDF("Year").cast(DoubleType))
+flightsDF = flightsDF.withColumn("Month", flightsDF("Month").cast(DoubleType))
+flightsDF = flightsDF.withColumn("DayOfMonth", flightsDF("DayOfMonth").cast(DoubleType))
+flightsDF = flightsDF.withColumn("DayOfWeek", flightsDF("DayOfWeek").cast(DoubleType))
+flightsDF = flightsDF.withColumn("CRSElapsedTime", flightsDF("CRSElapsedTime").cast(DoubleType))
+flightsDF = flightsDF.withColumn("ArrDelay", flightsDF("ArrDelay").cast(DoubleType))
+flightsDF = flightsDF.withColumn("DepDelay", flightsDF("DepDelay").cast(DoubleType))
+flightsDF = flightsDF.withColumn("Distance", flightsDF("Distance").cast(DoubleType))
+flightsDF = flightsDF.withColumn("TaxiOut", flightsDF("TaxiOut").cast(DoubleType))
+flightsDF = flightsDF.withColumn("Cancelled", flightsDF("Cancelled").cast(DoubleType))
+flightsDF = flightsDF.withColumn("CRSDepTime", flightsDF("CRSDepTime").cast(DoubleType))
+flightsDF = flightsDF.withColumn("CRSArrTime", flightsDF("CRSArrTime").cast(DoubleType))
 
 // We remove the cancelled flights since they do not contain information about the target variable (ArrDelay).
 flightsDF = flightsDF.filter(col("Cancelled") === false)
 // We remove such column and the CancellationCode
 flightsDF = flightsDF.drop("Cancelled").drop("CancellationCode")
 
-val toDayOfWeek: Int => String =  _ match {
+val toDayOfWeek: Double => String =  _ match {
 case 1 => "Monday"
 case 2 => "Tuesday"
 case 3 => "Wednesday"
@@ -69,3 +72,56 @@ case 7 => "Sunday"
 val toDayOfWeekDF = udf(toDayOfWeek)
 flightsDF = flightsDF.withColumn("DayOfWeek", toDayOfWeekDF($"DayOfWeek"))
 
+val toMonth: Double => String =  _ match {
+case 1 => "January"
+case 2 => "February"
+case 3 => "March"
+case 4 => "April"
+case 5 => "May"
+case 6 => "June"
+case 7 => "July"
+case 8 => "August"
+case 9 => "September"
+case 10 => "October"
+case 11 => "November"
+case 12 => "December"
+}
+
+val toMonthDF = udf(toMonth)
+flightsDF = flightsDF.withColumn("Month", toMonthDF($"Month"))
+
+// TODO: Normalize UNIX time
+
+// Eliminate DepTime since DepTime = CRSDepTime + DepDelay by definition
+flightsDF = flightsDF.drop("DepTime")
+
+
+
+// ML 
+
+import org.apache.spark.ml.feature.VectorAssembler
+
+val arr = flightsDF.drop("ArrDelay")
+.drop("DayOfWeek").drop("Month").drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest").columns
+val assembler = new VectorAssembler()
+ .setInputCols(arr)
+ .setOutputCol("features")
+
+val output = assembler.transform(flightsDF.limit(100))
+
+import org.apache.spark.ml.regression.LinearRegression
+val lr = new LinearRegression()
+ .setFeaturesCol("features")
+ .setLabelCol("ArrDelay")
+ .setMaxIter(10)
+ .setElasticNetParam(0.8)
+
+val lrModel = lr.fit(output)
+
+
+val trainingSummary = lrModel.summary
+println(s"numIterations: ${trainingSummary.totalIterations}")
+println(s"objectiveHistory:${trainingSummary.objectiveHistory.toList}")
+trainingSummary.residuals.show()
+println(s"RMSE: ${trainingSummary.rootMeanSquaredError}")
+println(s"r2: ${trainingSummary.r2}")
