@@ -2,6 +2,7 @@ import spark.implicits._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions.unix_timestamp
 import org.apache.spark.sql.functions.{concat, lit}
+import org.apache.spark.sql.functions.udf
 
 val project = "/project"
 val archive = "2000"
@@ -54,3 +55,17 @@ flightsDF = toTimeStamp(flightsDF, "CRSArrTime")
 flightsDF = flightsDF.filter(col("Cancelled") === false)
 // We remove such column and the CancellationCode
 flightsDF = flightsDF.drop("Cancelled").drop("CancellationCode")
+
+val toDayOfWeek: Int => String =  _ match {
+case 1 => "Monday"
+case 2 => "Tuesday"
+case 3 => "Wednesday"
+case 4 => "Thursday"
+case 5 => "Friday"
+case 6 => "Saturday"
+case 7 => "Sunday"
+}
+
+val toDayOfWeekDF = udf(toDayOfWeek)
+flightsDF = flightsDF.withColumn("DayOfWeek", toDayOfWeekDF($"DayOfWeek"))
+
