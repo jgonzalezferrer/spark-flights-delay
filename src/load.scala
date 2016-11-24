@@ -73,7 +73,7 @@ case 7 => "Sunday"
 }
 
 val toDayOfWeekDF = udf(toDayOfWeek)
-flightsDF = flightsDF.withColumn("DayOfWeek", toDayOfWeekDF($"DayOfWeek"))
+//flightsDF = flightsDF.withColumn("DayOfWeek", toDayOfWeekDF($"DayOfWeek"))
 
 val toMonth: Double => String =  _ match {
 case 1 => "January"
@@ -91,7 +91,7 @@ case 12 => "December"
 }
 
 val toMonthDF = udf(toMonth)
-flightsDF = flightsDF.withColumn("Month", toMonthDF($"Month"))
+//flightsDF = flightsDF.withColumn("Month", toMonthDF($"Month"))
 
 // Normalize UNIX time, we take as reference point the earliest year in the database.
 val timeStampReference = unix_timestamp(lit("01/01/1987"), "dd/MM/yy")
@@ -101,9 +101,12 @@ flightsDF = flightsDF.withColumn("CRSArrTime", $"CRSArrTime" - timeStampReferenc
 // Eliminate DepTime since DepTime = CRSDepTime + DepDelay by definition
 flightsDF = flightsDF.drop("DepTime")
 
-
+//Stats
+flightsDF.describe().show()
+flightsDF.stat.corr("ArrDelay","Distance")
 
 // ML 
+
 
 import org.apache.spark.ml.feature.VectorAssembler
 
@@ -111,11 +114,14 @@ import org.apache.spark.ml.feature.VectorAssembler
 flightsDF = flightsDF.drop("DayOfWeek").drop("Month").drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest")
 flightsDF = flightsDF.na.drop()
 
+// Split the data into training and test sets (30% held out for testing).
+val Array(trainingData, testData) = flightsDF.limit(100000).randomSplit(Array(0.7, 0.3))
+
 val assembler = new VectorAssembler()
  .setInputCols(flightsDF.drop("ArrDelay").columns)
  .setOutputCol("features")
 
-val output = assembler.transform(flightsDF.limit(10000))
+val output = assembler.transform(trainingData)
 
 import org.apache.spark.ml.regression.LinearRegression
 val lr = new LinearRegression()
@@ -128,29 +134,148 @@ val lrModel = lr.fit(output)
 
 
 val trainingSummary = lrModel.summary
-println(s"numIterations: ${trainingSummary.totalIterations}")
-println(s"objectiveHistory:${trainingSummary.objectiveHistory.toList}")
-trainingSummary.residuals.show()
 println(s"RMSE: ${trainingSummary.rootMeanSquaredError}")
 println(s"r2: ${trainingSummary.r2}")
 
-//Stats
-flightsDF.describe().show()
-flightsDF.stat.corr("ArrDelay","Distance")
-
 //Test
-
-//Splitting
-val split = flightsDF.randomSplit(Array(0.7,0.3)) //Split for testing
-val training = split(0)
-val test = split(1)
-
-
-//Test
-val output2 = assembler.transform(flightsDF.limit(300))
+val output2 = assembler.transform(testData)
 lrModel.evaluate(output2).rootMeanSquaredError //To evaluate a test set
-lrModel.transform(output2) //To predict
+//lrModel.transform(output2) //To predict
 
 
+//Random Trees
+
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.feature.VectorIndexer
+import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
+
+
+flightsDF = flightsDF.drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest")
+flightsDF = flightsDF.na.drop()
+
+
+// Automatically identify categorical features, and index them.
+// Set maxCategories so features with > 15 distinct values are treated as continuous.
+val featureIndexer = new VectorAssembler()
+  .setInputCols(flightsDF.drop("ArrDelay").columns)
+  .setOutputCol("features")
+
+
+// Split the data into training and test sets (30% held out for testing).
+val Array(trainingData, testData) = flightsDF.limit(100000).randomSplit(Array(0.7, 0.3))
+
+// Train a RandomForest model.
+val rf = new RandomForestRegressor()
+  .setLabelCol("ArrDelay")
+  .setFeaturesCol("features")
+
+val tr = featureIndexer.transform(trainingData)
+
+val indexer = new VectorIndexer()
+  .setInputCol("features")
+  .setOutputCol("indexed")
+  .setMaxCategories(15)
+
+val indexerModel = indexer.fit(tr)
+
+
+val trc = indexerModel.transform(tr)
+
+// Train model. This also runs the indexer.
+val model = rf.fit(trc)
+
+val tst = featureIndexer.transform(testData)
+// Make predictions.
+
+
+val tstc = indexerModel.transform(tst)
+
+// Make predictions.
+val predictions = model.transform(tstc)
+
+
+val evaluator = new RegressionEvaluator()
+  .setLabelCol("ArrDelay")
+  .setPredictionCol("prediction")
+  .setMetricName("rmse")
+
+val rmse = evaluator.evaluate(predictions)
+
+//Boosting trees
+
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.feature.VectorIndexer
+import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
+
+flightsDF = flightsDF.drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest")
+flightsDF = flightsDF.na.drop()
+
+
+val featureIndexer = new VectorAssembler()
+  .setInputCols(flightsDF.drop("ArrDelay").columns)
+  .setOutputCol("features")
+
+// Split the data into training and test sets (30% held out for testing).
+val Array(trainingData, testData) = flightsDF.limit(100000).randomSplit(Array(0.7, 0.3))
+
+// Train a GBT model.
+val gbt = new GBTRegressor()
+  .setLabelCol("ArrDelay")
+  .setFeaturesCol("features")
+  .setMaxIter(10)
+
+val tr = featureIndexer.transform(trainingData)
+
+val indexer = new VectorIndexer()
+  .setInputCol("features")
+  .setOutputCol("indexed")
+  .setMaxCategories(15)
+
+val indexerModel = indexer.fit(tr)
+
+
+val trc = indexerModel.transform(tr)
+
+
+// Train model. This also runs the indexer.
+val model = gbt.fit(trc)
+
+val tst = featureIndexer.transform(testData)
+// Make predictions.
+
+
+val tstc = indexerModel.transform(tst)
+val predictions = model.transform(tstc)
+
+val evaluator = new RegressionEvaluator()
+  .setLabelCol("ArrDelay")
+  .setPredictionCol("prediction")
+  .setMetricName("rmse")
+
+val rmse = evaluator.evaluate(predictions)
+
+//Pipeline example with boosting
+
+
+val pipeline = new Pipeline().setStages(Array(featureIndexer, indexerModel, gbt))
+
+val pModel = pipeline.fit(trainingData)
+val predictions = pModel.transform(testData)
+
+//VectorIndexer to transform categorical variables
+
+import org.apache.spark.ml.feature.VectorIndexer
+
+val indexer = new VectorIndexer()
+  .setInputCol("features")
+  .setOutputCol("indexed")
+  .setMaxCategories(15)
+
+val indexerModel = indexer.fit(output)
+
+
+val indexedData = indexerModel.transform(output)
 
 
