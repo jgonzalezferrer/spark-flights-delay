@@ -152,5 +152,96 @@ lrModel.evaluate(output2).rootMeanSquaredError //To evaluate a test set
 lrModel.transform(output2) //To predict
 
 
+flightsDF = flightsDF.na.drop()
+flightsDF = flightsDF.drop("DayOfWeek").drop("Month").drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest")
+
+//Random Trees
+
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.feature.VectorIndexer
+import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
+
+
+// Automatically identify categorical features, and index them.
+// Set maxCategories so features with > 15 distinct values are treated as continuous.
+val featureIndexer = new VectorAssembler()
+  .setInputCols(flightsDF.drop("ArrDelay").columns)
+  .setOutputCol("features")
+
+
+// Split the data into training and test sets (30% held out for testing).
+val Array(trainingData, testData) = flightsDF.limit(10000).randomSplit(Array(0.7, 0.3))
+
+// Train a RandomForest model.
+val rf = new RandomForestRegressor()
+  .setLabelCol("ArrDelay")
+  .setFeaturesCol("features")
+
+
+ val tr = featureIndexer.transform(trainingData)
+
+// Train model. This also runs the indexer.
+val model = rf.fit(tr)
+
+val tst = featureIndexer.transform(testData)
+
+// Make predictions.
+val predictions = model.transform(tst)
+
+
+val evaluator = new RegressionEvaluator()
+  .setLabelCol("ArrDelay")
+  .setPredictionCol("prediction")
+  .setMetricName("rmse")
+
+val rmse = evaluator.evaluate(predictions)
+
+//Boosting trees
+
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.feature.VectorIndexer
+import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
+
+
+val featureIndexer = new VectorAssembler()
+  .setInputCols(flightsDF.drop("ArrDelay").columns)
+  .setOutputCol("features")
+
+// Split the data into training and test sets (30% held out for testing).
+val Array(trainingData, testData) = flightsDF.limit(10000).randomSplit(Array(0.7, 0.3))
+
+// Train a GBT model.
+val gbt = new GBTRegressor()
+  .setLabelCol("ArrDelay")
+  .setFeaturesCol("features")
+  .setMaxIter(10)
+
+val tr = featureIndexer.transform(trainingData)
+
+// Train model. This also runs the indexer.
+val model = gbt.fit(tr)
+
+val tst = featureIndexer.transform(testData)
+// Make predictions.
+val predictions = model.transform(tst)
+
+val evaluator = new RegressionEvaluator()
+  .setLabelCol("ArrDelay")
+  .setPredictionCol("prediction")
+  .setMetricName("rmse")
+
+val rmse = evaluator.evaluate(predictions)
+
+//VectorIndexer
+
+val featureIndexer = new VectorIndexer()
+  .setInputCol("features")
+  .setOutputCol("indexedFeatures")
+  .setMaxCategories(40)
+  .fit(tr)
+
+
 
 
