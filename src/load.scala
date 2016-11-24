@@ -31,8 +31,8 @@ flightsDF = flightsDF.na.drop(Array("ArrDelay"))
 
 // Let us convert these variable into TimeStamp
 //flightsDF = flightsDF.withColumn("DepTime", flightsDF("DepTime").cast(DoubleType))
-//flightsDF = flightsDF.withColumn("CRSDepTime", flightsDF("CRSDepTime").cast(DoubleType))
-//flightsDF = flightsDF.withColumn("CRSArrtime", flightsDF("CRSArrTime").cast(DoubleType))
+flightsDF = flightsDF.withColumn("CRSDepTime", flightsDF("CRSDepTime").cast(DoubleType))
+flightsDF = flightsDF.withColumn("CRSArrtime", flightsDF("CRSArrTime").cast(DoubleType))
 
 // Given a dataframe and the name of a column (string) which has time in format hhmm, it creates a new column based on the day, month, year, hour and minute. 
 def toTimeStamp(df: org.apache.spark.sql.DataFrame, a: String) : org.apache.spark.sql.DataFrame = {
@@ -93,7 +93,10 @@ case 12 => "December"
 val toMonthDF = udf(toMonth)
 flightsDF = flightsDF.withColumn("Month", toMonthDF($"Month"))
 
-// TODO: Normalize UNIX time
+// Normalize UNIX time, we take as reference point the earliest year in the database.
+val timeStampReference = unix_timestamp(lit("01/01/1987"), "dd/MM/yy")
+flightsDF = flightsDF.withColumn("CRSDepTime", $"CRSDepTime" - timeStampReference)
+flightsDF = flightsDF.withColumn("CRSArrTime", $"CRSArrTime" - timeStampReference)
 
 // Eliminate DepTime since DepTime = CRSDepTime + DepDelay by definition
 flightsDF = flightsDF.drop("DepTime")
