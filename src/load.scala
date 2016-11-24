@@ -24,7 +24,10 @@ val allowedColumns = allowedVariables.map(x => col(x))
 // Selecting the just the allowed columns.
 flightsDF = flightsDF.select(allowedColumns:_*)
 
+//Drop rows with null values in the target variable
+flightsDF = flightsDF.na.drop(Array("ArrDelay"))
 
+//Drop 
 
 // Let us convert these variable into TimeStamp
 //flightsDF = flightsDF.withColumn("DepTime", flightsDF("DepTime").cast(DoubleType))
@@ -101,13 +104,15 @@ flightsDF = flightsDF.drop("DepTime")
 
 import org.apache.spark.ml.feature.VectorAssembler
 
-val arr = flightsDF.drop("ArrDelay")
-.drop("DayOfWeek").drop("Month").drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest").columns
+
+flightsDF = flightsDF.drop("DayOfWeek").drop("Month").drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest")
+flightsDF = flightsDF.na.drop()
+
 val assembler = new VectorAssembler()
- .setInputCols(arr)
+ .setInputCols(flightsDF.drop("ArrDelay").columns)
  .setOutputCol("features")
 
-val output = assembler.transform(flightsDF.limit(100))
+val output = assembler.transform(flightsDF.limit(10000))
 
 import org.apache.spark.ml.regression.LinearRegression
 val lr = new LinearRegression()
@@ -125,3 +130,24 @@ println(s"objectiveHistory:${trainingSummary.objectiveHistory.toList}")
 trainingSummary.residuals.show()
 println(s"RMSE: ${trainingSummary.rootMeanSquaredError}")
 println(s"r2: ${trainingSummary.r2}")
+
+//Stats
+flightsDF.describe().show()
+flightsDF.stat.corr("ArrDelay","Distance")
+
+//Test
+
+//Splitting
+val split = flightsDF.randomSplit(Array(0.7,0.3)) //Split for testing
+val training = split(0)
+val test = split(1)
+
+
+//Test
+val output2 = assembler.transform(flightsDF.limit(300))
+lrModel.evaluate(output2).rootMeanSquaredError //To evaluate a test set
+lrModel.transform(output2) //To predict
+
+
+
+
