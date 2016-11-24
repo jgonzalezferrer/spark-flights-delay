@@ -130,6 +130,23 @@ object App {
         flightsDF.withColumn("CRSArrTime", col("CRSArrTime").cast(DoubleType))
 	flightsDF.withColumn("Year", col("Year").cast(DoubleType))
 	
+	/* Adding new variables */
+	
+	// TODO: Change it as a program parameter. 
+	val airportFile = "file:///root/javier/spark-flights-delay/data/extra/airports.csv"
+	val airportsDF = spark.read
+                .format("com.databricks.spark.csv")
+                .option("header", "true")
+                .load(airportFile)
+                .select(col("iata"), col("state"))
+
+
+	// New column: State of the Origin airports.
+	flightsDF = flightsDF.join(airportsDF, flightsDF("Origin") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "OriginState").drop("iata")
+	// New column: State of the Dest airports.
+	flightsDF = flightsDF.join(airportsDF, flightsDF("Dest") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "DestState").drop("iata")
+	
+
 	flightsDF.show
 
   }
