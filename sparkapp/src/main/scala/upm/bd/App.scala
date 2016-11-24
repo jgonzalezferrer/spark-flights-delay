@@ -23,7 +23,7 @@ object App {
 	val archive = "2000"
 
 	// Read csv file with headers from hdfs
-	var flightsDF = spark.read.format("csv").option("header", "true").load("hdfs://"+project+"/"+archive+".csv")
+	var flightsDF = spark.read.format("com.databricks.spark.csv").option("header", "true").load("hdfs://"+project+"/"+archive+".csv")
 
 	// Print schema
 	flightsDF.printSchema
