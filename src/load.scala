@@ -73,7 +73,7 @@ case 7 => "Sunday"
 }
 
 val toDayOfWeekDF = udf(toDayOfWeek)
-flightsDF = flightsDF.withColumn("DayOfWeek", toDayOfWeekDF($"DayOfWeek"))
+//flightsDF = flightsDF.withColumn("DayOfWeek", toDayOfWeekDF($"DayOfWeek"))
 
 val toMonth: Double => String =  _ match {
 case 1 => "January"
@@ -91,7 +91,7 @@ case 12 => "December"
 }
 
 val toMonthDF = udf(toMonth)
-flightsDF = flightsDF.withColumn("Month", toMonthDF($"Month"))
+//flightsDF = flightsDF.withColumn("Month", toMonthDF($"Month"))
 
 // Normalize UNIX time, we take as reference point the earliest year in the database.
 val timeStampReference = unix_timestamp(lit("01/01/1987"), "dd/MM/yy")
@@ -101,59 +101,50 @@ flightsDF = flightsDF.withColumn("CRSArrTime", $"CRSArrTime" - timeStampReferenc
 // Eliminate DepTime since DepTime = CRSDepTime + DepDelay by definition
 flightsDF = flightsDF.drop("DepTime")
 
-
+//Stats
+flightsDF.describe().show()
+flightsDF.stat.corr("ArrDelay","Distance")
 
 // ML 
+
 
 import org.apache.spark.ml.feature.VectorAssembler
 
 
-flightsDF = flightsDF.drop("DayOfWeek").drop("Month").drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest")
+flightsDF = flightsDF.drop("DayOfWeek").drop("Month").drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest").drop("DayOfMonth").drop("Year")
+
 flightsDF = flightsDF.na.drop()
+
+// Split the data into training and test sets (30% held out for testing).
+val Array(trainingData, testData) = flightsDF.limit(100000).randomSplit(Array(0.7, 0.3))
 
 val assembler = new VectorAssembler()
  .setInputCols(flightsDF.drop("ArrDelay").columns)
  .setOutputCol("features")
 
-val output = assembler.transform(flightsDF.limit(10000))
+val output = assembler.transform(trainingData)
+
+//Regression
 
 import org.apache.spark.ml.regression.LinearRegression
 val lr = new LinearRegression()
  .setFeaturesCol("features")
  .setLabelCol("ArrDelay")
- .setMaxIter(10)
+ .setMaxIter(100)
  .setElasticNetParam(0.8)
 
 val lrModel = lr.fit(output)
 
 
 val trainingSummary = lrModel.summary
-println(s"numIterations: ${trainingSummary.totalIterations}")
-println(s"objectiveHistory:${trainingSummary.objectiveHistory.toList}")
-trainingSummary.residuals.show()
 println(s"RMSE: ${trainingSummary.rootMeanSquaredError}")
 println(s"r2: ${trainingSummary.r2}")
 
-//Stats
-flightsDF.describe().show()
-flightsDF.stat.corr("ArrDelay","Distance")
-
 //Test
-
-//Splitting
-val split = flightsDF.randomSplit(Array(0.7,0.3)) //Split for testing
-val training = split(0)
-val test = split(1)
-
-
-//Test
-val output2 = assembler.transform(flightsDF.limit(300))
+val output2 = assembler.transform(testData)
 lrModel.evaluate(output2).rootMeanSquaredError //To evaluate a test set
-lrModel.transform(output2) //To predict
+//lrModel.transform(output2) //To predict
 
-
-flightsDF = flightsDF.na.drop()
-flightsDF = flightsDF.drop("DayOfWeek").drop("Month").drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest")
 
 //Random Trees
 
@@ -161,6 +152,11 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.feature.VectorIndexer
 import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
+import org.apache.spark.ml.feature.VectorAssembler
+
+
+flightsDF = flightsDF.drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest")
+flightsDF = flightsDF.na.drop()
 
 
 // Automatically identify categorical features, and index them.
@@ -171,23 +167,34 @@ val featureIndexer = new VectorAssembler()
 
 
 // Split the data into training and test sets (30% held out for testing).
-val Array(trainingData, testData) = flightsDF.limit(10000).randomSplit(Array(0.7, 0.3))
+val Array(trainingData, testData) = flightsDF.limit(100000).randomSplit(Array(0.7, 0.3))
 
 // Train a RandomForest model.
 val rf = new RandomForestRegressor()
   .setLabelCol("ArrDelay")
   .setFeaturesCol("features")
 
+val tr = featureIndexer.transform(trainingData)
 
- val tr = featureIndexer.transform(trainingData)
+val indexer = new VectorIndexer()
+  .setInputCol("features")
+  .setOutputCol("indexed")
+  .setMaxCategories(15)
+
+val indexerModel = indexer.fit(tr)
+
+
+val trc = indexerModel.transform(tr)
 
 // Train model. This also runs the indexer.
-val model = rf.fit(tr)
+val model = rf.fit(trc)
 
 val tst = featureIndexer.transform(testData)
 
 // Make predictions.
-val predictions = model.transform(tst)
+val tstc = indexerModel.transform(tst)
+
+val predictions = model.transform(tstc)
 
 
 val evaluator = new RegressionEvaluator()
@@ -203,6 +210,11 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.feature.VectorIndexer
 import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
+import org.apache.spark.ml.feature.VectorAssembler
+
+
+flightsDF = flightsDF.drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest")
+flightsDF = flightsDF.na.drop()
 
 
 val featureIndexer = new VectorAssembler()
@@ -210,7 +222,7 @@ val featureIndexer = new VectorAssembler()
   .setOutputCol("features")
 
 // Split the data into training and test sets (30% held out for testing).
-val Array(trainingData, testData) = flightsDF.limit(10000).randomSplit(Array(0.7, 0.3))
+val Array(trainingData, testData) = flightsDF.limit(100000).randomSplit(Array(0.7, 0.3))
 
 // Train a GBT model.
 val gbt = new GBTRegressor()
@@ -220,12 +232,25 @@ val gbt = new GBTRegressor()
 
 val tr = featureIndexer.transform(trainingData)
 
+val indexer = new VectorIndexer()
+  .setInputCol("features")
+  .setOutputCol("indexed")
+  .setMaxCategories(15)
+
+val indexerModel = indexer.fit(tr)
+
+
+val trc = indexerModel.transform(tr)
+
+
 // Train model. This also runs the indexer.
-val model = gbt.fit(tr)
+val model = gbt.fit(trc)
 
 val tst = featureIndexer.transform(testData)
+
 // Make predictions.
-val predictions = model.transform(tst)
+val tstc = indexerModel.transform(tst)
+val predictions = model.transform(tstc)
 
 val evaluator = new RegressionEvaluator()
   .setLabelCol("ArrDelay")
@@ -234,14 +259,54 @@ val evaluator = new RegressionEvaluator()
 
 val rmse = evaluator.evaluate(predictions)
 
-//VectorIndexer
+//Pipeline example with boosting
 
-val featureIndexer = new VectorIndexer()
+
+val pipeline = new Pipeline().setStages(Array(featureIndexer, indexerModel, gbt))
+
+val pModel = pipeline.fit(trainingData)
+val predictions = pModel.transform(testData)
+
+//VectorIndexer to transform categorical variables and label them
+
+import org.apache.spark.ml.feature.VectorIndexer
+
+val indexer = new VectorIndexer()
   .setInputCol("features")
-  .setOutputCol("indexedFeatures")
-  .setMaxCategories(40)
-  .fit(tr)
+  .setOutputCol("indexed")
+  .setMaxCategories(15)
+
+val indexerModel = indexer.fit(output)
 
 
+val indexedData = indexerModel.transform(output)
 
+//StringIndexer to transform strings to integers for categorical variables
 
+import org.apache.spark.ml.feature.StringIndexer	
+
+val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
+
+flightsDF=sIndexer.fit(flightsDF).transform(flightsDF)
+
+//val sIndexer2 = new StringIndexer().setInputCol("Dest").setOutputCol("DestInt")
+
+//flightsDF=sIndexer2.fit(flightsDF).transform(flightsDF)
+
+//OneHotEncoder to create dummy variables for carrier, month and day of the week
+
+import org.apache.spark.ml.feature.{OneHotEncoder, StringIndexer}
+
+val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
+
+val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
+
+val encoder3 = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
+
+flightsDF = encoder.transform(flightsDF)
+
+flightsDF = encoder2.transform(flightsDF)
+
+flightsDF = encoder3.transform(flightsDF)
+
+flightsDF=flightsDF.drop("DayOfWeek").drop("Month").drop("UniqueCarrierInt")
