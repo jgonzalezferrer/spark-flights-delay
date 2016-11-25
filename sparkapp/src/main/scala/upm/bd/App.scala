@@ -48,7 +48,7 @@ object App {
 	val flightsOriginalDF = spark.read
 	.format("com.databricks.spark.csv")
 	.option("header", "true")
-	.load("hdfs://"+project+"/*.csv")
+	.load("hdfs://"+args(0)+"*.csv")
 	.select(col("Year").cast(StringType),
 		col("Month").cast(StringType),
 		col("DayOfMonth").cast(StringType),
@@ -103,11 +103,10 @@ object App {
 	/* Adding new variables */ //TODO: Maybe not necessary??
 	
 	// TODO: Change it as a program parameter. 
-	val airportFile = "file:///root/javier/spark-flights-delay/data/extra/airports.csv"
 	val airportsDF = spark.read
 	.format("com.databricks.spark.csv")
 	.option("header", "true")
-	.load(airportFile)
+	.load("hdfs://"+args(1))
 	.select(col("iata"), col("state"))
 
 
@@ -152,8 +151,8 @@ object App {
  val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
  val encoder3 = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
  var flightsDFReg = encoder.transform(flightsDF)
- flightsDFReg = encoder2.transform(flightsDF)
- flightsDFReg = encoder3.transform(flightsDF)
+ flightsDFReg = encoder2.transform(flightsDFReg)
+ flightsDFReg = encoder3.transform(flightsDFReg)
  //Remove the original variables not to use them in regression
  flightsDFReg = flightsDFReg.drop("DayOfWeek").drop("Month").drop("UniqueCarrierInt") 
 // Split the data into training and test sets (30% held out for testing).
