@@ -120,16 +120,19 @@ object App {
 
 	// Machine learning pipes:
 
+	//Linear regression
+	flightsDF=flightsDF.sample(false, 0.005, 100) // Last parameter is the seed
+
 	//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable
 
 	val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
 	flightsDF=sIndexer.fit(flightsDF).transform(flightsDF)
 
-	val oIndexer = new  StringIndexer().setInputCol("OriginState").setOutputCol("OriginStateInt")
-	flightsDF=oIndexer.fit(flightsDF).transform(flightsDF)
+	//val oIndexer = new  StringIndexer().setInputCol("OriginState").setOutputCol("OriginStateInt")
+	//flightsDF=oIndexer.fit(flightsDF).transform(flightsDF)
 	
-	val dIndexer = new  StringIndexer().setInputCol("DestState").setOutputCol("DestStateInt")
-        flightsDF=dIndexer.fit(flightsDF).transform(flightsDF)
+	//val dIndexer = new  StringIndexer().setInputCol("DestState").setOutputCol("DestStateInt")
+        //flightsDF=dIndexer.fit(flightsDF).transform(flightsDF)
 
 
 
@@ -140,8 +143,6 @@ object App {
 	flightsDF = flightsDF.na.drop()
 
 
-//Linear regression
-flightsDF=flightsDF.sample(false, 0.0005)
 
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
  //Linear regression needs them to handle those categorical variables properly
@@ -150,17 +151,18 @@ var flightsDFReg=flightsDF
  val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
  val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
  val encoder3 = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
- val encoder4 = new OneHotEncoder().setInputCol("OriginStateInt").setOutputCol("dummyOriginState")
- val encoder5 = new OneHotEncoder().setInputCol("DestStateInt").setOutputCol("dummyDestState") 
+ //val encoder4 = new OneHotEncoder().setInputCol("OriginStateInt").setOutputCol("dummyOriginState")
+ //val encoder5 = new OneHotEncoder().setInputCol("DestStateInt").setOutputCol("dummyDestState") 
 flightsDFReg = encoder.transform(flightsDFReg)
  flightsDFReg = encoder2.transform(flightsDFReg)
  flightsDFReg = encoder3.transform(flightsDFReg)
-flightsDFReg = encoder4.transform(flightsDFReg)
-flightsDFReg = encoder5.transform(flightsDFReg)
+//flightsDFReg = encoder4.transform(flightsDFReg)
+//flightsDFReg = encoder5.transform(flightsDFReg)
+
  //Remove the original variables not to use them in regression
  flightsDFReg = flightsDFReg.drop("DayOfWeek").drop("Month").drop("UniqueCarrierInt").drop("OriginStateInt").drop("DestStateInt") 
 // Split the data into training and test sets (30% held out for testing).
-val Array(trainingDataR, testDataR) = flightsDFReg.randomSplit(Array(0.7, 0.3))
+val Array(trainingDataR, testDataR) = flightsDFReg.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
 //We use different data name for this algorithm because of the dummy variables, they are different for the tree models.
 
