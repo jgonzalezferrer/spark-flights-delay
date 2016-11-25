@@ -121,7 +121,7 @@ object App {
 	// Machine learning pipes:
 
 	//Linear regression
-	flightsDF=flightsDF.sample(false, 0.005, 100) // Last parameter is the seed
+	flightsDF=flightsDF.sample(false, 0.0025, 100) // Last parameter is the seed
 
 	//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable
 
@@ -177,6 +177,7 @@ val lr = new LinearRegression()
 .setFeaturesCol("features")
 .setLabelCol("ArrDelay")
 .setMaxIter(100)
+.setElasticNetParam(0.8)
 
 //Preparing the pipeline
 
@@ -192,15 +193,15 @@ var evaluator = new RegressionEvaluator()
 //To tune the parameters of the model
 
 val paramGrid = new ParamGridBuilder()
-  .addGrid(lr.elasticNetParam, Array(0,0.5,1))
-  .addGrid(lr.regParam, Array(0, 1,10))
+  .addGrid(lr.getParam("elasticNetParam"), Array(0.1,0.5,1.0))
+//  .addGrid(lr.getParam("regParam"), Array(0.1, 1.0,10.0))
   .build()
 
 val cv = new CrossValidator()
   .setEstimator(regressionPipeline)
   .setEvaluator(evaluator)
   .setEstimatorParamMaps(paramGrid)
-  .setNumFolds(4)
+  .setNumFolds(3)
 
 //Fitting the model to our data
 val rModel = cv.fit(trainingDataR)
