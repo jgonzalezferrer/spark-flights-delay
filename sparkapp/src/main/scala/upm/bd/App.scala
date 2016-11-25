@@ -48,8 +48,8 @@ object App {
 	val flightsOriginalDF = spark.read
 	.format("com.databricks.spark.csv")
 	.option("header", "true")
-	.load("hdfs://"+args(0)+"*.csv")
-	//.load("hdfs:///project/flights/*.csv")
+	//.load("hdfs://"+args(0)+"*.csv")
+	.load("hdfs:///project/flights/*.csv")
 	.select(col("Year").cast(StringType),
 		col("Month").cast(StringType),
 		col("DayOfMonth").cast(StringType),
@@ -105,17 +105,17 @@ object App {
 	/* Adding new variables */ //TODO: Maybe not necessary??
 	
 	// TODO: Change it as a program parameter. 
-	//val airportsDF = spark.read
-	//.format("com.databricks.spark.csv")
-	//.option("header", "true")
-	//.load("hdfs:///project/extra/airports.csv")
-	//.select(col("iata"), col("state"))
+	val airportsDF = spark.read
+	.format("com.databricks.spark.csv")
+	.option("header", "true")
+	.load("hdfs:///project/extra/airports.csv")
+	.select(col("iata"), col("state"))
 
 
 	// New column: State of the Origin airports.
-	//flightsDF = flightsDF.join(airportsDF, flightsDF("Origin") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "OriginState").drop("iata")
+	flightsDF = flightsDF.join(airportsDF, flightsDF("Origin") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "OriginState").drop("iata")
 	// New column: State of the Dest airports.
-	//flightsDF = flightsDF.join(airportsDF, flightsDF("Dest") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "DestState").drop("iata")
+	flightsDF = flightsDF.join(airportsDF, flightsDF("Dest") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "DestState").drop("iata")
 	
 
 	// Machine learning pipes:
@@ -125,9 +125,17 @@ object App {
 	val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
 	flightsDF=sIndexer.fit(flightsDF).transform(flightsDF)
 
+	val oIndexer = new  StringIndexer().setInputCol("OriginState").setOutputCol("OriginStateInt")
+	flightsDF=oIndexer.fit(flightsDF).transform(flightsDF)
+	
+	val dIndexer = new  StringIndexer().setInputCol("DestState").setOutputCol("DestStateInt")
+        flightsDF=dIndexer.fit(flightsDF).transform(flightsDF)
+
+
+
 	//Remove variables we do not consider appropriate for the ML algorithms (also the string version of UniqueCarrier)
 
-	flightsDF = flightsDF.drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest").drop("DayOfMonth").drop("Year").drop("UniqueCarrier")
+	flightsDF = flightsDF.drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest").drop("DayOfMonth").drop("Year").drop("UniqueCarrier").drop("DestState").drop("OriginState")
 	//Remove rows with null values for the remaining variables
 	flightsDF = flightsDF.na.drop()
 
@@ -142,11 +150,15 @@ var flightsDFReg=flightsDF
  val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
  val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
  val encoder3 = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
- flightsDFReg = encoder.transform(flightsDFReg)
+ val encoder4 = new OneHotEncoder().setInputCol("OriginStateInt").setOutputCol("dummyOriginState")
+ val encoder5 = new OneHotEncoder().setInputCol("DestStateInt").setOutputCol("dummyDestState") 
+flightsDFReg = encoder.transform(flightsDFReg)
  flightsDFReg = encoder2.transform(flightsDFReg)
  flightsDFReg = encoder3.transform(flightsDFReg)
+flightsDFReg = encoder4.transform(flightsDFReg)
+flightsDFReg = encoder5.transform(flightsDFReg)
  //Remove the original variables not to use them in regression
- flightsDFReg = flightsDFReg.drop("DayOfWeek").drop("Month").drop("UniqueCarrierInt") 
+ flightsDFReg = flightsDFReg.drop("DayOfWeek").drop("Month").drop("UniqueCarrierInt").drop("OriginStateInt").drop("DestStateInt") 
 // Split the data into training and test sets (30% held out for testing).
 val Array(trainingDataR, testDataR) = flightsDFReg.randomSplit(Array(0.7, 0.3))
 
