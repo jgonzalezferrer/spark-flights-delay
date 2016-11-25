@@ -113,9 +113,9 @@ object App {
 
 
 	// New column: State of the Origin airports.
-	flightsDF = flightsDF.join(airportsDF, flightsDF("Origin") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "OriginState").drop("iata")
+	flightsDF = flightsDF.join(airportsDF, flightsDF("Origin") === airportsDF("iata")).withColumnRenamed("state", "OriginState").drop("iata")
 	// New column: State of the Dest airports.
-	flightsDF = flightsDF.join(airportsDF, flightsDF("Dest") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "DestState").drop("iata")
+	flightsDF = flightsDF.join(airportsDF, flightsDF("Dest") === airportsDF("iata")).withColumnRenamed("state", "DestState").drop("iata")
 	
 
 	// Machine learning pipes:
@@ -141,7 +141,7 @@ object App {
 
 
 //Linear regression
-flightsDF=flightsDF.limit(10000)
+flightsDF=flightsDF.sample(false, 0.0005)
 
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
  //Linear regression needs them to handle those categorical variables properly
