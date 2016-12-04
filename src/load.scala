@@ -212,7 +212,6 @@ import org.apache.spark.ml.feature.VectorIndexer
 import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
 import org.apache.spark.ml.feature.VectorAssembler
 
-
 flightsDF = flightsDF.drop("UniqueCarrier").drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest")
 flightsDF = flightsDF.na.drop()
 
@@ -249,6 +248,7 @@ val model = gbt.fit(trc)
 val tst = featureIndexer.transform(testData)
 
 // Make predictions.
+
 val tstc = indexerModel.transform(tst)
 val predictions = model.transform(tstc)
 
@@ -266,6 +266,7 @@ val pipeline = new Pipeline().setStages(Array(featureIndexer, indexerModel, gbt)
 
 val pModel = pipeline.fit(trainingData)
 val predictions = pModel.transform(testData)
+
 
 //VectorIndexer to transform categorical variables and label them
 

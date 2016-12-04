@@ -1,0 +1,39 @@
+1. Download maven from https://maven.apache.org/download.cgi
+2. Unzip bin file in /opt
+3. Create a symbolic link: 
+# ln -s apache-maven-3.3.9/ maven
+Now we can access using /opt/maven/
+4. To create a basic Scala proejct, run:
+#  /opt/maven/bin/mvn archetype:generate
+Filter the available archetypes: 
+# scala-archetype-simple
+Select something like net.alchim31.maven:scala-archetype-simple
+Choose net.alchim31.maven:scala-archetype-simple LAST version.
+Group id: upm.bd
+artifactId: (name of project) sparkapp
+Rest of fields -> enter
+5. Open the pom.xml and remove the following line:
+# <arg>-make:transitive</arg>
+And add the following dependecies:
+<dependency>
+	 <groupId>org.apache.spark</groupId>
+	 <artifactId>spark-core_2.11</artifactId>
+	 <version>2.0.1</version>
+</dependency>
+<dependency>
+	 <groupId>org.apache.spark</groupId>
+	 <artifactId>spark-sql_2.11</artifactId>
+	 <version>2.0.1</version>
+</dependency>
+<dependency>
+	 <groupId>org.apache.spark</groupId>
+	 <artifactId>spark-mllib_2.11</artifactId>
+	 <version>2.0.1</version>
+</dependency>
+6. Open /src/test/scala/samples and remove specs.scala file.
+7. Compile and package the application
+# /opt/maven/bin/mvn package
+8. Launch the application, in the cluster, with spark-submit:
+# /opt/spark2/bin/spark-submit --master yarn --class upm.bd.App target/sparkapp-1.0-SNAPSHOT.jar
+
+
