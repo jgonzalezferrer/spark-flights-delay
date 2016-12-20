@@ -6,11 +6,14 @@ import org.apache.spark.sql.functions._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.feature.StringIndexer
 import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.feature.VectorIndexer
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
 import org.apache.spark.ml.feature.OneHotEncoder
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
+import org.apache.spark.ml.Pipeline
+
 
 object App {
 
@@ -172,22 +175,22 @@ val regressionPipeline = new Pipeline().setStages(Array(encoder, encoder2, encod
 //Fitting the model to our data
 val rModel = regressionPipeline.fit(trainingDataR)
 //Making predictions
-val result  = rModel.transform(testDataR)
+var predictions  = rModel.transform(testDataR)
 
 //Evaluating the result
 
-val evaluator = new RegressionEvaluator()
+var evaluator = new RegressionEvaluator()
   .setLabelCol("ArrDelay")
   .setPredictionCol("prediction")
   .setMetricName("rmse")
 
-val rmseRegression = evaluator.evaluate(result)
+val rmseRegression = Revaluator.evaluate(predictions)
 
 //Random Trees
 
 //Vector Indexer to indicate that some variables are categorical, so they are treated properly by the algorithms
 //In our case, DayOfWeek, Month, UniqueCarrier have less than 15 different classes, so they will be marked as categorical, as we want
- val indexer = new VectorIndexer()
+ var indexer = new VectorIndexer()
   .setInputCol("features")
   .setOutputCol("indexed")
   .setMaxCategories(15)
@@ -203,12 +206,12 @@ val rf = new RandomForestRegressor()
 
 val randomTreesPipeline = new Pipeline().setStages(Array(assembler, indexer, rf))
 //Fitting the model to our data
-val pModel = randomTreesPipeline.fit(trainingData)
+val RTModel = randomTreesPipeline.fit(trainingData)
 //Making predictions
-val predictions = pModel.transform(testData)
+predictions = RTModel.transform(testData)
 
 //Ealuating the result of the predictions
-val evaluator = new RegressionEvaluator()
+evaluator = new RegressionEvaluator()
   .setLabelCol("ArrDelay")
   .setPredictionCol("prediction")
   .setMetricName("rmse")
@@ -218,7 +221,7 @@ val rmseRandom = evaluator.evaluate(predictions)
 //Boosting trees
 
 //Same as before, we mark the variables that we want as categorical so they are treated properly by the algorithm.
-val indexer = new VectorIndexer()
+	indexer = new VectorIndexer()
   .setInputCol("features")
   .setOutputCol("indexed")
   .setMaxCategories(15)
@@ -234,12 +237,12 @@ val gbt = new GBTRegressor()
 
 val pipeline = new Pipeline().setStages(Array(assembler, indexer, gbt))
 //Training using the pipeline
-val pModel = pipeline.fit(trainingData)
+val BModel = pipeline.fit(trainingData)
 //Predictions 
-val predictions = pModel.transform(testData)
+predictions = BModel.transform(testData)
 
 //Evaluating the performance of the predictions
-val evaluator = new RegressionEvaluator()
+evaluator = new RegressionEvaluator()
   .setLabelCol("ArrDelay")
   .setPredictionCol("prediction")
   .setMetricName("rmse")
