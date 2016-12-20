@@ -172,7 +172,7 @@ val lr = new LinearRegression()
 
 //Preparing the pipeline
 
-val regressionPipeline = new Pipeline().setStages(Array(encoder, encoder2, encoder3, assembler, lr))
+val regressionPipeline = new Pipeline().setStages(Array(assembler, lr))
 //Fitting the model to our data
 val rModel = regressionPipeline.fit(trainingDataR)
 //Making predictions
