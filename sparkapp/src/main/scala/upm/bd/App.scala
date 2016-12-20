@@ -139,9 +139,8 @@ object App {
 flightsDF=flightsDF.limit(10000)
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
  //Linear regression needs them to handle those categorical variables properly
- var flightsDFReg=flightsDF
+ var flightsDFReg=flightsDF.limit(1000)
 
- flightsDFReg.show()
  val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
  val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
  val encoder3 = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
