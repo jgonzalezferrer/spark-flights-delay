@@ -136,11 +136,11 @@ object App {
 
 
 //Linear regression
-flightsDF=flightsDF.limit(10000)
+//flightsDF=flightsDF.limit(10000)
 
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
  //Linear regression needs them to handle those categorical variables properly
- var flightsDFReg=flightsDF.limit(1000)
+var flightsDFReg=flightsDF
 
 flightsDFReg.show()
 
