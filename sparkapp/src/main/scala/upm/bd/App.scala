@@ -148,10 +148,11 @@ object App {
 
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
  //Linear regression needs them to handle those categorical variables properly
+ var flightsDFReg=flightsDF
  val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
  val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
  val encoder3 = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
- var flightsDFReg = encoder.transform(flightsDF)
+ flightsDFReg = encoder.transform(flightsDFReg)
  flightsDFReg = encoder2.transform(flightsDFReg)
  flightsDFReg = encoder3.transform(flightsDFReg)
  //Remove the original variables not to use them in regression
