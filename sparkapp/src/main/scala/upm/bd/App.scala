@@ -260,7 +260,7 @@ println("rmse for different algorithms: ")
 println("Linear regression = "+rmseRegression)
 println("Random forests = "+rmseRandom)
 println("Boosting trees = "+rmseBoosintg)
-
+spark.stop()
   }
 
 }
