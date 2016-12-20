@@ -140,6 +140,8 @@ flightsDF=flightsDF.limit(10000)
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
  //Linear regression needs them to handle those categorical variables properly
  var flightsDFReg=flightsDF
+
+ flightsDFReg.show()
  val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
  val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
  val encoder3 = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
@@ -164,8 +166,6 @@ val lr = new LinearRegression()
 .setLabelCol("ArrDelay")
 .setMaxIter(100)
 .setElasticNetParam(0.8)
-
-flightsDFReg.show()
 
 //Preparing the pipeline
 
