@@ -118,9 +118,6 @@ object App {
 	//flightsDF = flightsDF.join(airportsDF, flightsDF("Dest") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "DestState").drop("iata")
 	
 
-	flightsDF.show
-
-
 	// Machine learning pipes:
 
 	//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable
@@ -141,8 +138,6 @@ object App {
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
  //Linear regression needs them to handle those categorical variables properly
 var flightsDFReg=flightsDF
-
-flightsDFReg.show()
 
  val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
  val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
