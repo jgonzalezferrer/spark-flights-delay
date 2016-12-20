@@ -94,11 +94,11 @@ object App {
 	flightsDF = flightsDF.withColumn("CRSArrTime", $"CRSArrTime" - timeStampReference)
 
 	//Cast variables to their original types
-	flightsDF.withColumn("DayOfMonth", col("DayOfMonth").cast(DoubleType))
-	flightsDF.withColumn("CRSDepTime", col("CRSDepTime").cast(DoubleType))
-	flightsDF.withColumn("CRSArrTime", col("CRSArrTime").cast(DoubleType))
-	flightsDF.withColumn("Year", col("Year").cast(DoubleType))
-	flightsDF.withColumn("Month", col("Month").cast(DoubleType))
+	flightsDF=flightsDF.withColumn("DayOfMonth", col("DayOfMonth").cast(DoubleType))
+	flightsDF=flightsDF.withColumn("CRSDepTime", col("CRSDepTime").cast(DoubleType))
+	flightsDF=flightsDF.withColumn("CRSArrTime", col("CRSArrTime").cast(DoubleType))
+	flightsDF=flightsDF.withColumn("Year", col("Year").cast(DoubleType))
+	flightsDF=flightsDF.withColumn("Month", col("Month").cast(DoubleType))
 	
 
 	/* Adding new variables */ //TODO: Maybe not necessary??
