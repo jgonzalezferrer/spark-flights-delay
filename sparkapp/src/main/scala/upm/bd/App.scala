@@ -49,6 +49,7 @@ object App {
 	.format("com.databricks.spark.csv")
 	.option("header", "true")
 	.load("hdfs://"+args(0)+"*.csv")
+	//.load("hdfs:///project/flights/*.csv")
 	.select(col("Year").cast(StringType),
 		col("Month").cast(StringType),
 		col("DayOfMonth").cast(StringType),
@@ -104,17 +105,17 @@ object App {
 	/* Adding new variables */ //TODO: Maybe not necessary??
 	
 	// TODO: Change it as a program parameter. 
-	val airportsDF = spark.read
-	.format("com.databricks.spark.csv")
-	.option("header", "true")
-	.load("hdfs://"+args(1))
-	.select(col("iata"), col("state"))
+	//val airportsDF = spark.read
+	//.format("com.databricks.spark.csv")
+	//.option("header", "true")
+	//.load("hdfs:///project/extra/airports.csv")
+	//.select(col("iata"), col("state"))
 
 
 	// New column: State of the Origin airports.
-	flightsDF = flightsDF.join(airportsDF, flightsDF("Origin") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "OriginState").drop("iata")
+	//flightsDF = flightsDF.join(airportsDF, flightsDF("Origin") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "OriginState").drop("iata")
 	// New column: State of the Dest airports.
-	flightsDF = flightsDF.join(airportsDF, flightsDF("Dest") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "DestState").drop("iata")
+	//flightsDF = flightsDF.join(airportsDF, flightsDF("Dest") === airportsDF("iata"), "left_outer").withColumnRenamed("state", "DestState").drop("iata")
 	
 
 	flightsDF.show
@@ -129,17 +130,19 @@ object App {
 
 	//Remove variables we do not consider appropriate for the ML algorithms (also the string version of UniqueCarrier)
 
-	flightsDF = flightsDF.drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest").drop("DayOfMonth").drop("Year").drop("UniqueCarrier").drop("OriginState").drop("DestState")
-
+	flightsDF = flightsDF.drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest").drop("DayOfMonth").drop("Year").drop("UniqueCarrier")
 	//Remove rows with null values for the remaining variables
 	flightsDF = flightsDF.na.drop()
 
 
 //Linear regression
 flightsDF=flightsDF.limit(10000)
+
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
  //Linear regression needs them to handle those categorical variables properly
  var flightsDFReg=flightsDF.limit(1000)
+
+flightsDFReg.show()
 
  val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
  val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
