@@ -129,7 +129,7 @@ object App {
 
 	//Remove variables we do not consider appropriate for the ML algorithms (also the string version of UniqueCarrier)
 
-	flightsDF = flightsDF.drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest").drop("DayOfMonth").drop("Year").drop("UniqueCarrier")
+	flightsDF = flightsDF.drop("FlightNum").drop("TailNum").drop("Origin").drop("Dest").drop("DayOfMonth").drop("Year").drop("UniqueCarrier").drop("OriginState").drop("DestState")
 
 	//Remove rows with null values for the remaining variables
 	flightsDF = flightsDF.na.drop()
