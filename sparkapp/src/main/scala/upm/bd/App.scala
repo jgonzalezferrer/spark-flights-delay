@@ -4,6 +4,13 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.ml.feature.StringIndexer
+import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
+import org.apache.spark.ml.feature.OneHotEncoder
+import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
 
 object App {
 
@@ -114,8 +121,6 @@ object App {
 
 	//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable
 
-	import org.apache.spark.ml.feature.StringIndexer
-
 	val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
 	flightsDF=sIndexer.fit(flightsDF).transform(flightsDF)
 
@@ -127,8 +132,6 @@ object App {
 	flightsDF = flightsDF.na.drop()
 
 	//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
-
-	import org.apache.spark.ml.feature.VectorAssembler
 
  	val assembler = new VectorAssembler()
  	.setInputCols(flightsDF.drop("ArrDelay").columns)
@@ -142,11 +145,10 @@ object App {
 
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
  //Linear regression needs them to handle those categorical variables properly
- import org.apache.spark.ml.feature.{OneHotEncoder, StringIndexer}
  val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
  val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
  val encoder3 = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
- flightsDFReg = encoder.transform(flightsDF)
+ var flightsDFReg = encoder.transform(flightsDF)
  flightsDFReg = encoder2.transform(flightsDF)
  flightsDFReg = encoder3.transform(flightsDF)
  //Remove the original variables not to use them in regression
@@ -158,7 +160,6 @@ val Array(trainingDataR, testDataR) = flightsDFReg.randomSplit(Array(0.7, 0.3))
 
 //Defining the model
 
-import org.apache.spark.ml.regression.LinearRegression
 val lr = new LinearRegression()
 .setFeaturesCol("features")
 .setLabelCol("ArrDelay")
@@ -183,8 +184,6 @@ val evaluator = new RegressionEvaluator()
 val rmseRegression = evaluator.evaluate(result)
 
 //Random Trees
-import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
-import org.apache.spark.ml.evaluation.RegressionEvaluator
 
 //Vector Indexer to indicate that some variables are categorical, so they are treated properly by the algorithms
 //In our case, DayOfWeek, Month, UniqueCarrier have less than 15 different classes, so they will be marked as categorical, as we want
@@ -217,7 +216,6 @@ val evaluator = new RegressionEvaluator()
 val rmseRandom = evaluator.evaluate(predictions)
 
 //Boosting trees
-import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
 
 //Same as before, we mark the variables that we want as categorical so they are treated properly by the algorithm.
 val indexer = new VectorIndexer()
