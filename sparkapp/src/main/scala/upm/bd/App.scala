@@ -248,6 +248,10 @@ val evaluator = new RegressionEvaluator()
 
 val rmseBoosintg = evaluator.evaluate(predictions)
 
+println("rmse for different algorithms: ")
+println("Linear regression = "+rmseRegression)
+println("Random forests = "+rmseRandom)
+printnln("Boosting trees = "+rmseBoosintg)
 
   }
 
