@@ -136,7 +136,7 @@ object App {
 
 
 //Linear regression
-
+flightsDF=flightsDF.limit(10000)
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
  //Linear regression needs them to handle those categorical variables properly
  var flightsDFReg=flightsDF
@@ -164,6 +164,8 @@ val lr = new LinearRegression()
 .setLabelCol("ArrDelay")
 .setMaxIter(100)
 .setElasticNetParam(0.8)
+
+flightsDFReg.show()
 
 //Preparing the pipeline
 
