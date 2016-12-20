@@ -134,15 +134,6 @@ object App {
 	//Remove rows with null values for the remaining variables
 	flightsDF = flightsDF.na.drop()
 
-	//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
-
- 	val assembler = new VectorAssembler()
- 	.setInputCols(flightsDF.drop("ArrDelay").columns)
- 	.setOutputCol("features")
-
-	// Split the data into training and test sets (30% held out for testing). Will be used in both tree algorithms
-	val Array(trainingData, testData) = flightsDF.randomSplit(Array(0.7, 0.3))
-
 
 //Linear regression
 
@@ -162,6 +153,10 @@ val Array(trainingDataR, testDataR) = flightsDFReg.randomSplit(Array(0.7, 0.3))
 
 //We use different data name for this algorithm because of the dummy variables, they are different for the tree models.
 
+ val assemblerReg = new VectorAssembler()
+ 	.setInputCols(flightsDFReg.drop("ArrDelay").columns)
+ 	.setOutputCol("features")
+
 //Defining the model
 
 val lr = new LinearRegression()
@@ -172,7 +167,7 @@ val lr = new LinearRegression()
 
 //Preparing the pipeline
 
-val regressionPipeline = new Pipeline().setStages(Array(assembler, lr))
+val regressionPipeline = new Pipeline().setStages(Array(assemblerReg, lr))
 //Fitting the model to our data
 val rModel = regressionPipeline.fit(trainingDataR)
 //Making predictions
@@ -186,6 +181,18 @@ var evaluator = new RegressionEvaluator()
   .setMetricName("rmse")
 
 val rmseRegression = evaluator.evaluate(predictions)
+
+
+//Trees
+
+//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
+
+val assembler = new VectorAssembler()
+ .setInputCols(flightsDF.drop("ArrDelay").columns)
+ .setOutputCol("features")
+
+// Split the data into training and test sets (30% held out for testing). Will be used in both tree algorithms
+val Array(trainingData, testData) = flightsDF.randomSplit(Array(0.7, 0.3))
 
 //Random Trees
 
