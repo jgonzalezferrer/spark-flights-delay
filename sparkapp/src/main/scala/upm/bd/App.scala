@@ -98,6 +98,7 @@ object App {
 	flightsDF.withColumn("CRSDepTime", col("CRSDepTime").cast(DoubleType))
 	flightsDF.withColumn("CRSArrTime", col("CRSArrTime").cast(DoubleType))
 	flightsDF.withColumn("Year", col("Year").cast(DoubleType))
+	flightsDF.withColumn("Month", col("Month").cast(DoubleType))
 	
 
 	/* Adding new variables */ //TODO: Maybe not necessary??
