@@ -184,7 +184,7 @@ var evaluator = new RegressionEvaluator()
   .setPredictionCol("prediction")
   .setMetricName("rmse")
 
-val rmseRegression = Revaluator.evaluate(predictions)
+val rmseRegression = evaluator.evaluate(predictions)
 
 //Random Trees
 
@@ -252,7 +252,7 @@ val rmseBoosintg = evaluator.evaluate(predictions)
 println("rmse for different algorithms: ")
 println("Linear regression = "+rmseRegression)
 println("Random forests = "+rmseRandom)
-printnln("Boosting trees = "+rmseBoosintg)
+println("Boosting trees = "+rmseBoosintg)
 
   }
 
