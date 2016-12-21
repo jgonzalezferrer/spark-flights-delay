@@ -64,7 +64,7 @@ object App {
 	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
 						.drop("CancellationCode").drop("FlightNum")
-						.drop("TailNum")drop("UniqueCarrier")
+						.drop("TailNum").drop("UniqueCarrier")
 						.drop("Year").drop("DayOfMonth")
 						.drop("Origin").drop("Dest")
 
@@ -74,7 +74,7 @@ object App {
 	flights.df = flights.df.na.drop()
 
 	flights.df = flights.df.drop("DayOfWeek")
-						.drop("Month").drop("UniqueCarrierInt")
+							.drop("Month").drop("UniqueCarrierInt")
 
 	// TODO: remove this
 	flights.df = flights.df.sample(false, 0.005, 100) // Last parameter is the seed
@@ -90,7 +90,7 @@ object App {
 	val lrModel = flights.linearRegressionModel.fit(trainingData)
 	val lrPredictions = lrModel.transform(testData)
 	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
-	
+	/*
 	// Random Forest
 	flights.randomForest(15)
 	val rfModel = flights.randomForestModel.fit(trainingData)
@@ -101,12 +101,12 @@ object App {
 	flights.boostingTrees(15, 10)
 	val btModel = flights.boostingTreesModel.fit(trainingData)
 	val btPredictions = btModel.transform(testData)
-	val rmseBoosting = flights.evaluator.evaluate(btPredictions)
+	val rmseBoosting = flights.evaluator.evaluate(btPredictions)*/
 	println(trainingData.count)
 	println("rmse for different algorithms: ")
 	println("Linear regression = "+rmseRegression)
-	println("Random forests = "+rmseRandom)
-	println("Boosting trees = "+rmseBoosting)
+	/*println("Random forests = "+rmseRandom)
+	println("Boosting trees = "+rmseBoosting)*/
 
 	}
 }
