@@ -52,6 +52,7 @@ object App {
 				.withColumnRenamed("long", "OriginLong")
 				.drop("iata")
 
+				/*
 	flights.df = flights.df.join(airportsDF, flights.df("Dest") === airportsDF("iata"))
 				.withColumnRenamed("lat", "DestLat")
 				.withColumnRenamed("long", "DestLong")
@@ -66,7 +67,7 @@ object App {
 						.drop("UniqueCarrierInt")
 						.drop("Origin").drop("Dest")
 
-
+*/
 	/* Null treatment */
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
 	flights.df = flights.df.na.drop()
@@ -89,11 +90,22 @@ object App {
 	flights.setAssembler(assembler)
 
 	// Linear Regression
-	flights.linearRegression(targetVariable, 100, 1, 3, Array(0.1, 1.0, 10.0))
-	
+	flights.linearRegression(targetVariable, 100, 1, 3, Array(0.1, 1.0, 10.0))	
 	val rModel = flights.linearRegressionModel.fit(trainingData)
 	val predictions = rModel.transform(testData)
 	val rmseRegression = flights.linearRegressionEvaluator.evaluate(predictions)
 	println(rmseRegression)
+
+	/*
+	// Random Forest
+	flights.randomForest(targetVariable, 15)
+	//Fitting the model to our data
+	val RFModel = flights.randomForestModel.fit(trainingData)
+	//Making predictions
+	val RFpredictions = RFModel.transform(testData)
+	val rmseRandom = flights.linearRegressionEvaluator.evaluate(predictions)
+	println(rmseRandom)*/
+
+
 	}
 }
