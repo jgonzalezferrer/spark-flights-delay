@@ -15,7 +15,7 @@ import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 
-class Flights(spark: SparkSession) {
+class Flights(spark: SparkSession, targetVariable: String) {
 
 	import spark.implicits._
 
@@ -25,6 +25,17 @@ class Flights(spark: SparkSession) {
 	var assembler: VectorAssembler = null
 	var randomForestModel: Pipeline = null
 	var boostingTreesModel: Pipeline = null
+
+	//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
+	assembler = new VectorAssembler()
+			.setInputCols(flights.df.drop(targetVariable).columns)
+			.setOutputCol("features")
+
+	//Evaluating the result
+	evaluator = new RegressionEvaluator()
+			.setLabelCol(targetVariable)
+			.setPredictionCol("prediction")
+			.setMetricName("rmse")
 
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
@@ -87,27 +98,21 @@ class Flights(spark: SparkSession) {
 		val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
 		df = sIndexer.fit(df).transform(df)
 
+		/*
 		//OneHotEncoder to create dummy variables for carrier, month and day of the week 
 		//Linear regression needs them to handle those categorical variables properly.
 		val dayEncoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
 		val monthEncoder = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
 		val carrierEncoder = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
+
+		// Just for regression
+	
 		df = dayEncoder.transform(df)
 		df = monthEncoder.transform(df)
-		df = carrierEncoder.transform(df)
+		df = carrierEncoder.transform(df)*/
 	}
 
-	def setAssembler(vassembler: VectorAssembler){
-		assembler = vassembler
-	}
-
-	def setEvaluator(vevaluator: RegressionEvaluator){
-		//Evaluating the result
-		evaluator = vevaluator
-
-	}
-
-	def linearRegression(targetVariable: String, maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
+	def linearRegression(maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
 	
 		//Defining the model
 
@@ -132,7 +137,7 @@ class Flights(spark: SparkSession) {
 			.setNumFolds(k)
 	}
 	
-	def randomForest(targetVariable: String, maxCategories: Int){
+	def randomForest(maxCategories: Int){
 		//Vector Indexer to indicate that some variables are categorical, so they are treated properly by the algorithms
 		//In our case, DayOfWeek, Month, UniqueCarrier have less than 15 different classes, so they will be marked as categorical, as we want
 		var indexer = new VectorIndexer()
@@ -149,7 +154,7 @@ class Flights(spark: SparkSession) {
 		
 	}
 
-	def boostingTrees(targetVariable: String, maxCategories: Int, maxIter: Int){
+	def boostingTrees(String, maxCategories: Int, maxIter: Int){
 
 		var indexer = new VectorIndexer()
 				.setInputCol("features")

@@ -27,7 +27,8 @@ object App {
  
 	import spark.implicits._
 
-	var flights = new Flights(spark)
+	val targetVariable = "ArrDelay"
+	var flights = new Flights(spark, targetVariable)
 	flights.load("hdfs:///project/flights/*.csv")
 	
 	/* Discarding data points */
@@ -63,15 +64,17 @@ object App {
 	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
 						.drop("CancellationCode").drop("FlightNum")
-						.drop("TailNum").drop("DayOfWeek")
-						.drop("Month").drop("UniqueCarrier")
-						.drop("UniqueCarrierInt")
+						.drop("TailNum")drop("UniqueCarrier")
+						.drop("Year").drop("DayOfMonth")
 						.drop("Origin").drop("Dest")
 
 
 	/* Null treatment */
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
 	flights.df = flights.df.na.drop()
+
+	flights.df = flights.df.drop("DayOfWeek")
+						.drop("Month").drop("UniqueCarrierInt")
 
 	// TODO: remove this
 	flights.df = flights.df.sample(false, 0.005, 100) // Last parameter is the seed
@@ -81,38 +84,21 @@ object App {
 	// Split the data into training and test sets (30% held out for testing).
 	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
-	val targetVariable = "ArrDelay"
-
-	//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
-	val assembler = new VectorAssembler()
-			.setInputCols(flights.df.drop(targetVariable).columns)
-			.setOutputCol("features")	
-	
-	flights.setAssembler(assembler)
-
-	//Evaluating the result
-	val evaluator = new RegressionEvaluator()
-			.setLabelCol(targetVariable)
-			.setPredictionCol("prediction")
-			.setMetricName("rmse")
-
-	flights.setEvaluator(evaluator)
-
 
 	// Linear Regression
-	flights.linearRegression(targetVariable, 100, 1, 3, Array(0.1, 1.0))	
+	flights.linearRegression(100, 1, 3, Array(0.1, 1.0))	
 	val lrModel = flights.linearRegressionModel.fit(trainingData)
 	val lrPredictions = lrModel.transform(testData)
 	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
 	
 	// Random Forest
-	flights.randomForest(targetVariable, 15)
+	flights.randomForest(15)
 	val rfModel = flights.randomForestModel.fit(trainingData)
 	val rfPredictions = rfModel.transform(testData)
 	val rmseRandom = flights.evaluator.evaluate(rfPredictions)
 
 	//Boosting trees
-	flights.boostingTrees(targetVariable, 15, 10)
+	flights.boostingTrees(15, 10)
 	val btModel = flights.boostingTreesModel.fit(trainingData)
 	val btPredictions = btModel.transform(testData)
 	val rmseBoosting = flights.evaluator.evaluate(btPredictions)
