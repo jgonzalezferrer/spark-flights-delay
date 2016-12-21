@@ -45,7 +45,8 @@ object App {
 	flightsDF.flights.printSchema
 
 
-	/*
+	/* 
+	
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
 	val flightsOriginalDF = spark.read
@@ -288,7 +289,7 @@ object App {
 	println("Random forests = "+rmseRandom)
 	println("Boosting trees = "+rmseBoosintg)
 	spark.stop()
-
-	*/
+*/
+	
 }
 

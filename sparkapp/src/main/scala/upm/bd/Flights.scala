@@ -2,12 +2,13 @@ package upm.bd
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.DataFrame
 
 class Flights(spark: SparkSession, datasetPath: String) {
 
 	import spark.implicits._
 
-	public org.apache.spark.sql.DataFrame flights;	
+	public DataFrame flights;	
 
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
