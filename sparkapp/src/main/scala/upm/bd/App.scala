@@ -144,7 +144,6 @@ object App {
 
 	//Check the stardard deviation and mean of the target variable
 
-	val dMean =flightsDF.select(mean("ArrDelay")).take(1)(0)(0)
 	val dStDev=flightsDF.select(stddev("ArrDelay")).take(1)(0)(0)
 
 
@@ -288,7 +287,6 @@ evaluator = new RegressionEvaluator()
 
 val rmseBoosintg = evaluator.evaluate(predictions)
 
-println("Mean of arrival delay = "+dMean)
 println("Standard deviation of arrival delay = "+dStDev)
 println("rmse for different algorithms: ")
 println("Linear regression = "+rmseRegression)
