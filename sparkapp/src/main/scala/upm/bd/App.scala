@@ -190,7 +190,7 @@ var evaluator = new RegressionEvaluator()
   .setMetricName("rmse")
 //To tune the parameters of the model
 
-val paramGrid = new ParamGridBuilder()
+var paramGrid = new ParamGridBuilder()
   //.addGrid(lr.getParam("elasticNetParam"), Array(0.0,0.5,1.0))
   .addGrid(lr.getParam("regParam"), Array(0.1, 1.0,10.0))
   .build()
@@ -251,6 +251,15 @@ evaluator = new RegressionEvaluator()
   .setPredictionCol("prediction")
   .setMetricName("rmse")
 
+ paramGrid = new ParamGridBuilder()
+  .build()
+
+val cv = new CrossValidator()
+  .setEstimator(randomTreesPipeline)
+  .setEvaluator(evaluator)
+  .setEstimatorParamMaps(paramGrid)
+  .setNumFolds(3)
+
 val rmseRandom = evaluator.evaluate(predictions)
 
 //Boosting trees
@@ -285,6 +294,7 @@ evaluator = new RegressionEvaluator()
 val rmseBoosintg = evaluator.evaluate(predictions)
 
 println("rmse for different algorithms: ")
+println("Standard deviation of arrival delay =")
 println("Linear regression = "+rmseRegression)
 println("Random forests = "+rmseRandom)
 println("Boosting trees = "+rmseBoosintg)
