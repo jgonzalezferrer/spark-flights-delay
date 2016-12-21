@@ -71,13 +71,12 @@ object App {
 	flights.df = flights.df.na.drop()
 
 	flights.df.sample(false, 0.0005, 100) // Last parameter is the seed
-	print(flights.df.count)
 	/* Machine learning part */
 
 	// Split the data into training and test sets (30% held out for testing).
 	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
-	flights.linearRegression(trainingData, testData, "ArrDelay", 100, 1, 3, Array(0.1, 1.0,10.0))
+	flights.linearRegression(trainingData, testData, "ArrDelay", 100, 1, 2, Array(0.1))
 	
  }
 }

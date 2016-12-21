@@ -20,6 +20,7 @@ class Flights(spark: SparkSession) {
 	import spark.implicits._
 
 	var df: DataFrame = null
+	var rmse: Double = null
 
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
@@ -133,7 +134,7 @@ class Flights(spark: SparkSession) {
 
 		val rmseRegression = evaluator.evaluate(predictions)
 
-		println(rmseRegression)
+		rmse = rmseRegression
 	}
 }
 
