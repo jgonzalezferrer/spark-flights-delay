@@ -70,7 +70,7 @@ object App {
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
 	flights.df = flights.df.na.drop()
 
-	flights.df.sample(false, 0.0005, 100) // Last parameter is the seed
+	flights.df = flights.df.sample(false, 0.0005, 100) // Last parameter is the seed
 	/* Machine learning part */
 
 	// Split the data into training and test sets (30% held out for testing).
