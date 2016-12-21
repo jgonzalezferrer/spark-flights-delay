@@ -61,12 +61,17 @@ object App {
 				.drop("iata")
 	
 				*/
+
+	// TODO: remove this
+	flights.df = flights.df.sample(false, 0.005, 100) // Last parameter is the seed
+	
 	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
 						.drop("CancellationCode").drop("FlightNum")
 						.drop("TailNum").drop("UniqueCarrier")
 						.drop("Year").drop("DayOfMonth")
 						.drop("Origin").drop("Dest")
+
 
 
 	/* Null treatment */
@@ -88,8 +93,7 @@ object App {
 	flights.df = flights.df.drop("DayOfWeek")
 							.drop("Month").drop("UniqueCarrierInt")
 
-	// TODO: remove this
-	flights.df = flights.df.sample(false, 0.005, 100) // Last parameter is the seed
+	
 
 	/* Machine learning part */
 
