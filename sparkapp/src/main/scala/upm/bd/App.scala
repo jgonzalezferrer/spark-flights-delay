@@ -77,6 +77,15 @@ object App {
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
 	flights.df = flights.df.na.drop()
 
+	//OneHotEncoder to create dummy variables for carrier, month and day of the week 
+	//Linear regression needs them to handle those categorical variables properly.
+	val dayEncoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
+	val monthEncoder = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
+	val carrierEncoder = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
+
+	flights.df = flights.df.drop("DayOfWeek")
+							.drop("Month").drop("UniqueCarrierInt")
+
 	// Split the data into training and test sets (30% held out for testing).
 	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
@@ -92,19 +101,12 @@ object App {
 	val btPredictions = btModel.transform(testData)
 	val rmseBoosting = flights.evaluator.evaluate(btPredictions)
 
-	//OneHotEncoder to create dummy variables for carrier, month and day of the week 
-	//Linear regression needs them to handle those categorical variables properly.
-	val dayEncoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
-	val monthEncoder = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
-	val carrierEncoder = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
-
 	// Just for regression
 	flights.df = dayEncoder.transform(flights.df)
 	flights.df = monthEncoder.transform(flights.df)
 	flights.df = carrierEncoder.transform(flights.df)
 
-	flights.df = flights.df.drop("DayOfWeek")
-							.drop("Month").drop("UniqueCarrierInt")
+	
 
 	
 
