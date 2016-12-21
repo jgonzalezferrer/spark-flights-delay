@@ -112,10 +112,12 @@ class Flights(spark: SparkSession) {
 		val regressionPipeline = new Pipeline().setStages(Array(assemblerReg, lr))
 
 		//Evaluating the result
-		linearRegressionEvaluator = new RegressionEvaluator()
+		var evaluator = new RegressionEvaluator()
 			.setLabelCol("ArrDelay")
 			.setPredictionCol("prediction")
 			.setMetricName("rmse")
+
+		linearRegressionEvaluator = evaluator
 
 		//To tune the parameters of the model
 		var paramGrid = new ParamGridBuilder()
@@ -124,7 +126,7 @@ class Flights(spark: SparkSession) {
 
 		linearRegressionModel = new CrossValidator()
 			.setEstimator(regressionPipeline)
-			.setEvaluator(linearRegressionEvaluator)
+			.setEvaluator(evaluator)
 			.setEstimatorParamMaps(paramGrid)
 			.setNumFolds(3)
 	}
