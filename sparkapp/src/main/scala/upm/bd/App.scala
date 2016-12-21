@@ -121,7 +121,7 @@ object App {
 	// Machine learning pipes:
 
 	//Linear regression
-	flightsDF=flightsDF.sample(false, 0.0025, 100) // Last parameter is the seed
+	flightsDF=flightsDF.sample(false, 0.005, 100) // Last parameter is the seed
 
 	//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable
 
@@ -142,6 +142,10 @@ object App {
 	//Remove rows with null values for the remaining variables
 	flightsDF = flightsDF.na.drop()
 
+	//Check the stardard deviation and mean of the target variable
+
+	val dMean =flightsDF.select(mean("ArrDelay")).take(1)(0)(0)
+	val dStDev=flightsDF.select(stddev("ArrDelay")).take(1)(0)(0)
 
 
  //OneHotEncoder to create dummy variables for carrier, month and day of the week 
@@ -219,7 +223,7 @@ val assembler = new VectorAssembler()
  .setOutputCol("features")
 
 // Split the data into training and test sets (30% held out for testing). Will be used in both tree algorithms
-val Array(trainingData, testData) = flightsDF.randomSplit(Array(0.7, 0.3))
+val Array(trainingData, testData) = flightsDF.randomSplit(Array(0.7, 0.3), 100) //Last parameter is the seed
 
 //Random Trees
 
@@ -250,15 +254,6 @@ evaluator = new RegressionEvaluator()
   .setLabelCol("ArrDelay")
   .setPredictionCol("prediction")
   .setMetricName("rmse")
-
- paramGrid = new ParamGridBuilder()
-  .build()
-
-val cv = new CrossValidator()
-  .setEstimator(randomTreesPipeline)
-  .setEvaluator(evaluator)
-  .setEstimatorParamMaps(paramGrid)
-  .setNumFolds(3)
 
 val rmseRandom = evaluator.evaluate(predictions)
 
@@ -293,8 +288,9 @@ evaluator = new RegressionEvaluator()
 
 val rmseBoosintg = evaluator.evaluate(predictions)
 
+println("Mean of arrival delay = "+dMean)
+println("Standard deviation of arrival delay = "+dStDev)
 println("rmse for different algorithms: ")
-println("Standard deviation of arrival delay =")
 println("Linear regression = "+rmseRegression)
 println("Random forests = "+rmseRandom)
 println("Boosting trees = "+rmseBoosintg)
