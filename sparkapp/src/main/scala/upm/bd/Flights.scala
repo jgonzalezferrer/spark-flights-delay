@@ -124,7 +124,7 @@ class Flights(spark: SparkSession) {
 
 		linearRegressionModel = new CrossValidator()
 			.setEstimator(regressionPipeline)
-			.setEvaluator(evaluator)
+			.setEvaluator(linearRegressionEvaluator)
 			.setEstimatorParamMaps(paramGrid)
 			.setNumFolds(k)
 	}
