@@ -102,7 +102,7 @@ object App {
 							.drop("Month").drop("UniqueCarrierInt")
 
 	// Linear Regression
-	flights.linearRegression(trainingData, 100, 1, 3, Array(0.1, 1.0))	
+	flights.linearRegression(trainingDataR, 100, 1, 3, Array(0.1, 1.0))	
 	val lrModel = flights.linearRegressionModel.fit(trainingDataR)
 	val lrPredictions = lrModel.transform(testDataR)
 	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
@@ -113,13 +113,13 @@ object App {
 							.drop("dummyMonth").drop("dummyUniqueCarrierInt")
 
 	// Random Forest
-	flights.randomForest(15)
+	flights.randomForest(trainingData, 15)
 	val rfModel = flights.randomForestModel.fit(trainingData)
 	val rfPredictions = rfModel.transform(testData)
 	val rmseRandom = flights.evaluator.evaluate(rfPredictions)
 
 	//Boosting trees
-	flights.boostingTrees(15, 10)
+	flights.boostingTrees(trainingData, 15, 10)
 	val btModel = flights.boostingTreesModel.fit(trainingData)
 	val btPredictions = btModel.transform(testData)
 	val rmseBoosting = flights.evaluator.evaluate(btPredictions)
