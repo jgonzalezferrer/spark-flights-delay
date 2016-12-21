@@ -21,7 +21,7 @@ class Flights(spark: SparkSession) {
 
 	var df: DataFrame = null
 	var linearRegressionModel: LinearRegression = null
-	var linearRegressionEvaluator: RegressionEvaluator = null
+	var linearRegressionEvaluator: LinearRegression = null
 
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
