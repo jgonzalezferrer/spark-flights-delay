@@ -28,7 +28,7 @@ class Flights(spark: SparkSession, targetVariable: String) {
 
 	//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
 	assembler = new VectorAssembler()
-			.setInputCols(flights.df.drop(targetVariable).columns)
+			.setInputCols(df.drop(targetVariable).columns)
 			.setOutputCol("features")
 
 	//Evaluating the result
