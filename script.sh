@@ -2,7 +2,8 @@ archive=2000
 folder=/project
 
 mkdir -p data
-mkdir -p flights
+mkdir -p data/flights
+mkdir -p data/extra
 cd data/flights
 
 wget -nc http://stat-computing.org/dataexpo/2009/$archive.csv.bz2 
