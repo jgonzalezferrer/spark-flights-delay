@@ -24,12 +24,16 @@ object App {
 	.builder()
 	.appName("Spark Flights Delay")
 	.getOrCreate()
-
  
 	import spark.implicits._
 
-	var flightsDF = new Flights(spark)
-	flightsDF.load("hdfs:///project/flights/*.csv")
-	flightsDF.flights.printSchema	
+	var flights = new Flights(spark)
+	flights.load("hdfs:///project/flights/*.csv")
+	
+	/* Discarding data points */
+	//Drop rows with null values in the target variable	
+	flights.df.count
+	flights.df = flights.df.na.drop(Array("ArrDelay"))	
+	flights.df.count
  }
 }
