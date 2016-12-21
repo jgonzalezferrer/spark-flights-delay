@@ -14,7 +14,6 @@ import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
-import upm.db.Flights
 
 object App {
 	def main(args : Array[String]) {
@@ -29,7 +28,8 @@ object App {
  
 	import spark.implicits._
 
-	var flightsDF = new Flights(spark, "hdfs:///project/flights/*.csv")
+	var flightsDF = new Flights(spark)
+	flightsDF.load("hdfs:///project/flights/*.csv")
 	flightsDF.flights.printSchema	
  }
 }
