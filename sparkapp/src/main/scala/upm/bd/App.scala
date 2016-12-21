@@ -1,182 +1,182 @@
-	package upm.bd
+package upm.bd
 
-	import org.apache.spark.sql.SparkSession
-	import org.apache.spark.sql.types._
-	import org.apache.spark.sql.functions._
-	import org.apache.log4j.{Level, Logger}
-	import org.apache.spark.ml.feature.StringIndexer
-	import org.apache.spark.ml.feature.VectorAssembler
-	import org.apache.spark.ml.feature.VectorIndexer
-	import org.apache.spark.ml.regression.LinearRegression
-	import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
-	import org.apache.spark.ml.feature.OneHotEncoder
-	import org.apache.spark.ml.evaluation.RegressionEvaluator
-	import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
-	import org.apache.spark.ml.Pipeline
-	import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.functions._
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.ml.feature.StringIndexer
+import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.feature.VectorIndexer
+import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
+import org.apache.spark.ml.feature.OneHotEncoder
+import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 
-	object App {
+object App {
 
-	  /* 
-	   * Transform a date in "dd/MM/yyyy HHmm" format to Unix TimeStamp 
-	   * Input: columnName -> name of the column to transform
-	   * Return: new dataframe
-	   */
-	   def dateToTimeStamp(df: org.apache.spark.sql.DataFrame, columnName: String) : org.apache.spark.sql.DataFrame = {
-	   	return df.withColumn(columnName, 
-	   		unix_timestamp(concat(col("DayOfMonth"), lit("/"), col("Month"), lit("/"), col("Year"), lit(" "), col(columnName)), 
-	   			"dd/MM/yyyy HHmm"))
-	   }  
+	/* 
+	* Transform a date in "dd/MM/yyyy HHmm" format to Unix TimeStamp 
+	* Input: columnName -> name of the column to transform
+	* Return: new dataframe
+	*/
+	def dateToTimeStamp(df: org.apache.spark.sql.DataFrame, columnName: String) : org.apache.spark.sql.DataFrame = {
+	return df.withColumn(columnName, 
+		unix_timestamp(concat(col("DayOfMonth"), lit("/"), col("Month"), lit("/"), col("Year"), lit(" "), col(columnName)), 
+			"dd/MM/yyyy HHmm"))
+	}  
 
-	   def main(args : Array[String]) {
-		// Disabling debug option. 
-		Logger.getRootLogger().setLevel(Level.WARN)
+	def main(args : Array[String]) {
+	// Disabling debug option. 
+	Logger.getRootLogger().setLevel(Level.WARN)
 
-		val spark = SparkSession
-			.builder()
-			.appName("Spark Flights Delay")
-			.getOrCreate()
+	val spark = SparkSession
+	.builder()
+	.appName("Spark Flights Delay")
+	.getOrCreate()
 
-		import spark.implicits._
+	import spark.implicits._
 
-		// TODO: Change it as a program parameter.
-		val project = "/project"
+	// TODO: Change it as a program parameter.
+	val project = "/project"
 
-		// Read all csv files with headers from hdfs.
-		// The valid columns are selected, casting them (the default type is String).
-		val flightsOriginalDF = spark.read
-			.format("com.databricks.spark.csv")
-			.option("header", "true")
-			//.load("hdfs://"+args(0)+"*.csv")
-			.load("hdfs:///project/flights/*.csv")
-			.select(col("Year").cast(StringType),
-				col("Month").cast(StringType),
-				col("DayOfMonth").cast(StringType),
-				col("DayOfWeek").cast(DoubleType),
-				col("DepTime").cast(DoubleType),
-				col("CRSDepTime").cast(StringType),
-				col("CRSArrtime").cast(StringType),
-				col("UniqueCarrier").cast(StringType),
-				col("FlightNum").cast(StringType),
-				col("TailNum").cast(StringType),
-				col("CRSElapsedTime").cast(DoubleType),
-				col("ArrDelay").cast(DoubleType),
-				col("DepDelay").cast(DoubleType),
-				col("Origin").cast(StringType),
-				col("Dest").cast(StringType),
-				col("Distance").cast(DoubleType),
-				col("TaxiOut").cast(DoubleType),
-				col("Cancelled").cast(BooleanType),
-				col("CancellationCode").cast(StringType))
+	// Read all csv files with headers from hdfs.
+	// The valid columns are selected, casting them (the default type is String).
+	val flightsOriginalDF = spark.read
+	.format("com.databricks.spark.csv")
+	.option("header", "true")
+	//.load("hdfs://"+args(0)+"*.csv")
+	.load("hdfs:///project/flights/*.csv")
+	.select(col("Year").cast(StringType),
+	col("Month").cast(StringType),
+	col("DayOfMonth").cast(StringType),
+	col("DayOfWeek").cast(DoubleType),
+	col("DepTime").cast(DoubleType),
+	col("CRSDepTime").cast(StringType),
+	col("CRSArrtime").cast(StringType),
+	col("UniqueCarrier").cast(StringType),
+	col("FlightNum").cast(StringType),
+	col("TailNum").cast(StringType),
+	col("CRSElapsedTime").cast(DoubleType),
+	col("ArrDelay").cast(DoubleType),
+	col("DepDelay").cast(DoubleType),
+	col("Origin").cast(StringType),
+	col("Dest").cast(StringType),
+	col("Distance").cast(DoubleType),
+	col("TaxiOut").cast(DoubleType),
+	col("Cancelled").cast(BooleanType),
+	col("CancellationCode").cast(StringType))
 
-		///////////// Data Manipulation ////////////	
+	///////////// Data Manipulation ////////////	
 
-		var flightsDF = flightsOriginalDF
+	var flightsDF = flightsOriginalDF
 
-		/* Discarding data points */
-		//Drop rows with null values in the target variable	
-		flightsDF = flightsDF.na.drop(Array("ArrDelay"))
-		
-		/* Discarding unused variables */
-		flightsDF = flightsDF.drop("DepTime").drop("Cancelled").drop("CancellationCode").drop("FlightNum").drop("TailNum")
+	/* Discarding data points */
+	//Drop rows with null values in the target variable	
+	flightsDF = flightsDF.na.drop(Array("ArrDelay"))
 
-		/* Transformation of variables */
-		
-		//Convert scheduled departure and arrival time to TimeStamp
-		flightsDF = dateToTimeStamp(flightsDF, "CRSDepTime")
-		flightsDF = dateToTimeStamp(flightsDF, "CRSArrTime")
+	/* Discarding unused variables */
+	flightsDF = flightsDF.drop("DepTime").drop("Cancelled").drop("CancellationCode").drop("FlightNum").drop("TailNum")
 
-		// Normalize UNIX time, we take as reference point the earliest date in the database.
-		val timeStampReference = unix_timestamp(lit("01/01/1987"), "dd/MM/yy")
-		flightsDF = flightsDF.withColumn("CRSDepTime", $"CRSDepTime" - timeStampReference)
-		flightsDF = flightsDF.withColumn("CRSArrTime", $"CRSArrTime" - timeStampReference)
+	/* Transformation of variables */
 
-		//Cast variables to their original types
-		flightsDF=flightsDF.withColumn("DayOfMonth", col("DayOfMonth").cast(DoubleType))
-		flightsDF=flightsDF.withColumn("CRSDepTime", col("CRSDepTime").cast(DoubleType))
-		flightsDF=flightsDF.withColumn("CRSArrTime", col("CRSArrTime").cast(DoubleType))
-		flightsDF=flightsDF.withColumn("Year", col("Year").cast(DoubleType))
-		flightsDF=flightsDF.withColumn("Month", col("Month").cast(DoubleType))
-		
+	//Convert scheduled departure and arrival time to TimeStamp
+	flightsDF = dateToTimeStamp(flightsDF, "CRSDepTime")
+	flightsDF = dateToTimeStamp(flightsDF, "CRSArrTime")
 
-		/* Adding new variables */
-		val airportsDF = spark.read
-			.format("com.databricks.spark.csv")
-			.option("header", "true")
-			.load("hdfs:///project/extra/airports.csv")
-			.select(col("iata"),
-					col("lat").cast(DoubleType),
-					col("long").cast(DoubleType))
+	// Normalize UNIX time, we take as reference point the earliest date in the database.
+	val timeStampReference = unix_timestamp(lit("01/01/1987"), "dd/MM/yy")
+	flightsDF = flightsDF.withColumn("CRSDepTime", $"CRSDepTime" - timeStampReference)
+	flightsDF = flightsDF.withColumn("CRSArrTime", $"CRSArrTime" - timeStampReference)
+
+	//Cast variables to their original types
+	flightsDF=flightsDF.withColumn("DayOfMonth", col("DayOfMonth").cast(DoubleType))
+	flightsDF=flightsDF.withColumn("CRSDepTime", col("CRSDepTime").cast(DoubleType))
+	flightsDF=flightsDF.withColumn("CRSArrTime", col("CRSArrTime").cast(DoubleType))
+	flightsDF=flightsDF.withColumn("Year", col("Year").cast(DoubleType))
+	flightsDF=flightsDF.withColumn("Month", col("Month").cast(DoubleType))
 
 
-		// New columns: lat and long of the Origin airports.
-		flightsDF = flightsDF.join(airportsDF, flightsDF("Origin") === airportsDF("iata"))
-					.withColumnRenamed("lat", "OriginLat")
-					.withColumnRenamed("long", "OriginLong")
-					.drop("iata")
+	/* Adding new variables */
+	val airportsDF = spark.read
+	.format("com.databricks.spark.csv")
+	.option("header", "true")
+	.load("hdfs:///project/extra/airports.csv")
+	.select(col("iata"),
+	col("lat").cast(DoubleType),
+	col("long").cast(DoubleType))
 
-		flightsDF = flightsDF.join(airportsDF, flightsDF("Dest") === airportsDF("iata"))
-					.withColumnRenamed("lat", "DestLat")
-					.withColumnRenamed("long", "DestLong")
-					.drop("iata")
-		
-		
 
-		// Machine learning pipes:
+	// New columns: lat and long of the Origin airports.
+	flightsDF = flightsDF.join(airportsDF, flightsDF("Origin") === airportsDF("iata"))
+	.withColumnRenamed("lat", "OriginLat")
+	.withColumnRenamed("long", "OriginLong")
+	.drop("iata")
 
-		//Linear regression
-		flightsDF=flightsDF.sample(false, 0.005, 100) // Last parameter is the seed
-
-		//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable
-
-		val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
-		flightsDF=sIndexer.fit(flightsDF).transform(flightsDF)
-
-		//val oIndexer = new  StringIndexer().setInputCol("OriginState").setOutputCol("OriginStateInt")
-		//flightsDF=oIndexer.fit(flightsDF).transform(flightsDF)
-		
-		//val dIndexer = new  StringIndexer().setInputCol("DestState").setOutputCol("DestStateInt")
-	        //flightsDF=dIndexer.fit(flightsDF).transform(flightsDF)
+	flightsDF = flightsDF.join(airportsDF, flightsDF("Dest") === airportsDF("iata"))
+	.withColumnRenamed("lat", "DestLat")
+	.withColumnRenamed("long", "DestLong")
+	.drop("iata")
 
 
 
-		//Remove variables we do not consider appropriate for the ML algorithms (also the string version of UniqueCarrier)
+	// Machine learning pipes:
 
-		flightsDF = flightsDF.drop("Origin").drop("Dest").drop("DayOfMonth").drop("Year").drop("UniqueCarrier").drop("DestState").drop("OriginState")
-		//Remove rows with null values for the remaining variables
-		flightsDF = flightsDF.na.drop()
+	//Linear regression
+	flightsDF=flightsDF.sample(false, 0.005, 100) // Last parameter is the seed
 
-		//Check the stardard deviation and mean of the target variable
+	//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable
 
-		val dMean =flightsDF.select(mean("ArrDelay")).take(1)(0)(0)
-		val dStDev=flightsDF.select(stddev("ArrDelay")).take(1)(0)(0)
+	val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
+	flightsDF=sIndexer.fit(flightsDF).transform(flightsDF)
+
+	//val oIndexer = new  StringIndexer().setInputCol("OriginState").setOutputCol("OriginStateInt")
+	//flightsDF=oIndexer.fit(flightsDF).transform(flightsDF)
+
+	//val dIndexer = new  StringIndexer().setInputCol("DestState").setOutputCol("DestStateInt")
+	//flightsDF=dIndexer.fit(flightsDF).transform(flightsDF)
 
 
-	 //OneHotEncoder to create dummy variables for carrier, month and day of the week 
-	 //Linear regression needs them to handle those categorical variables properly
+
+	//Remove variables we do not consider appropriate for the ML algorithms (also the string version of UniqueCarrier)
+
+	flightsDF = flightsDF.drop("Origin").drop("Dest").drop("DayOfMonth").drop("Year").drop("UniqueCarrier").drop("DestState").drop("OriginState")
+	//Remove rows with null values for the remaining variables
+	flightsDF = flightsDF.na.drop()
+
+	//Check the stardard deviation and mean of the target variable
+
+	val dMean =flightsDF.select(mean("ArrDelay")).take(1)(0)(0)
+	val dStDev=flightsDF.select(stddev("ArrDelay")).take(1)(0)(0)
+
+
+	//OneHotEncoder to create dummy variables for carrier, month and day of the week 
+	//Linear regression needs them to handle those categorical variables properly
 	var flightsDFReg=flightsDF
 
-	 val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
-	 val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
-	 val encoder3 = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
-	 //val encoder4 = new OneHotEncoder().setInputCol("OriginStateInt").setOutputCol("dummyOriginState")
-	 //val encoder5 = new OneHotEncoder().setInputCol("DestStateInt").setOutputCol("dummyDestState") 
+	val encoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
+	val encoder2 = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
+	val encoder3 = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
+	//val encoder4 = new OneHotEncoder().setInputCol("OriginStateInt").setOutputCol("dummyOriginState")
+	//val encoder5 = new OneHotEncoder().setInputCol("DestStateInt").setOutputCol("dummyDestState") 
 	flightsDFReg = encoder.transform(flightsDFReg)
-	 flightsDFReg = encoder2.transform(flightsDFReg)
-	 flightsDFReg = encoder3.transform(flightsDFReg)
+	flightsDFReg = encoder2.transform(flightsDFReg)
+	flightsDFReg = encoder3.transform(flightsDFReg)
 	//flightsDFReg = encoder4.transform(flightsDFReg)
 	//flightsDFReg = encoder5.transform(flightsDFReg)
 
-	 //Remove the original variables not to use them in regression
-	 flightsDFReg = flightsDFReg.drop("DayOfWeek").drop("Month").drop("UniqueCarrierInt").drop("OriginStateInt").drop("DestStateInt") 
+	//Remove the original variables not to use them in regression
+	flightsDFReg = flightsDFReg.drop("DayOfWeek").drop("Month").drop("UniqueCarrierInt").drop("OriginStateInt").drop("DestStateInt") 
 	// Split the data into training and test sets (30% held out for testing).
 	val Array(trainingDataR, testDataR) = flightsDFReg.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
 	//We use different data name for this algorithm because of the dummy variables, they are different for the tree models.
 
-	 val assemblerReg = new VectorAssembler()
-	 	.setInputCols(flightsDFReg.drop("ArrDelay").columns)
-	 	.setOutputCol("features")
+	val assemblerReg = new VectorAssembler()
+	.setInputCols(flightsDFReg.drop("ArrDelay").columns)
+	.setOutputCol("features")
 
 	//Defining the model
 
@@ -193,21 +193,21 @@
 	//Evaluating the result
 
 	var evaluator = new RegressionEvaluator()
-	  .setLabelCol("ArrDelay")
-	  .setPredictionCol("prediction")
-	  .setMetricName("rmse")
+	.setLabelCol("ArrDelay")
+	.setPredictionCol("prediction")
+	.setMetricName("rmse")
 	//To tune the parameters of the model
 
 	var paramGrid = new ParamGridBuilder()
-	  //.addGrid(lr.getParam("elasticNetParam"), Array(0.0,0.5,1.0))
-	  .addGrid(lr.getParam("regParam"), Array(0.1, 1.0,10.0))
-	  .build()
+	//.addGrid(lr.getParam("elasticNetParam"), Array(0.0,0.5,1.0))
+	.addGrid(lr.getParam("regParam"), Array(0.1, 1.0,10.0))
+	.build()
 
 	val cv = new CrossValidator()
-	  .setEstimator(regressionPipeline)
-	  .setEvaluator(evaluator)
-	  .setEstimatorParamMaps(paramGrid)
-	  .setNumFolds(3)
+	.setEstimator(regressionPipeline)
+	.setEvaluator(evaluator)
+	.setEstimatorParamMaps(paramGrid)
+	.setNumFolds(3)
 
 	//Fitting the model to our data
 	val rModel = cv.fit(trainingDataR)
@@ -223,8 +223,8 @@
 	//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
 
 	val assembler = new VectorAssembler()
-	 .setInputCols(flightsDF.drop("ArrDelay").columns)
-	 .setOutputCol("features")
+	.setInputCols(flightsDF.drop("ArrDelay").columns)
+	.setOutputCol("features")
 
 	// Split the data into training and test sets (30% held out for testing). Will be used in both tree algorithms
 	val Array(trainingData, testData) = flightsDF.randomSplit(Array(0.7, 0.3), 100) //Last parameter is the seed
@@ -233,16 +233,16 @@
 
 	//Vector Indexer to indicate that some variables are categorical, so they are treated properly by the algorithms
 	//In our case, DayOfWeek, Month, UniqueCarrier have less than 15 different classes, so they will be marked as categorical, as we want
-	 var indexer = new VectorIndexer()
-	  .setInputCol("features")
-	  .setOutputCol("indexed")
-	  .setMaxCategories(15)
-	 
+	var indexer = new VectorIndexer()
+	.setInputCol("features")
+	.setOutputCol("indexed")
+	.setMaxCategories(15)
+
 	//Defining the model
 
 	val rf = new RandomForestRegressor()
-		.setLabelCol("ArrDelay")
-		.setFeaturesCol("features")
+	.setLabelCol("ArrDelay")
+	.setFeaturesCol("features")
 
 
 	//Pipeline of random forest: 
@@ -255,26 +255,26 @@
 
 	//Ealuating the result of the predictions
 	evaluator = new RegressionEvaluator()
-	  .setLabelCol("ArrDelay")
-	  .setPredictionCol("prediction")
-	  .setMetricName("rmse")
+	.setLabelCol("ArrDelay")
+	.setPredictionCol("prediction")
+	.setMetricName("rmse")
 
 	val rmseRandom = evaluator.evaluate(predictions)
 
 	//Boosting trees
 
 	//Same as before, we mark the variables that we want as categorical so they are treated properly by the algorithm.
-		indexer = new VectorIndexer()
-	  .setInputCol("features")
-	  .setOutputCol("indexed")
-	  .setMaxCategories(15)
+	indexer = new VectorIndexer()
+	.setInputCol("features")
+	.setOutputCol("indexed")
+	.setMaxCategories(15)
 
 	//Defining the model
 
 	val gbt = new GBTRegressor()
-	  .setLabelCol("ArrDelay")
-	  .setFeaturesCol("features")
-	  .setMaxIter(10)
+	.setLabelCol("ArrDelay")
+	.setFeaturesCol("features")
+	.setMaxIter(10)
 
 	//Pipeline to train and test the data with the boosting algorithm
 
@@ -286,9 +286,9 @@
 
 	//Evaluating the performance of the predictions
 	evaluator = new RegressionEvaluator()
-	  .setLabelCol("ArrDelay")
-	  .setPredictionCol("prediction")
-	  .setMetricName("rmse")
+	.setLabelCol("ArrDelay")
+	.setPredictionCol("prediction")
+	.setMetricName("rmse")
 
 	val rmseBoosintg = evaluator.evaluate(predictions)
 
@@ -299,6 +299,5 @@
 	println("Random forests = "+rmseRandom)
 	println("Boosting trees = "+rmseBoosintg)
 	spark.stop()
-	  }
+}
 
-	}
