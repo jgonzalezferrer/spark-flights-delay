@@ -46,6 +46,7 @@ object App {
 				col("lat").cast(DoubleType),
 				col("long").cast(DoubleType))
 
+	/*
 	// New columns: lat and long of the Origin airports.
 	flights.df = flights.df.join(airportsDF, flights.df("Origin") === airportsDF("iata"))
 				.withColumnRenamed("lat", "OriginLat")
@@ -66,7 +67,7 @@ object App {
 						.drop("Month").drop("UniqueCarrier")
 						.drop("UniqueCarrierInt")
 						.drop("Origin").drop("Dest")
-
+*/
 
 	/* Null treatment */
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
@@ -99,7 +100,8 @@ object App {
 
 
 	// Linear Regression
-	flights.linearRegression(targetVariable, 100, 1, 3, Array(0.1, 1.0, 10.0))	
+	val param = Array(0.1)
+	flights.linearRegression(targetVariable, 100, 1, 3, param)	
 	val lrModel = flights.linearRegressionModel.fit(trainingData)
 	val lrPredictions = lrModel.transform(testData)
 	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
