@@ -4,6 +4,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Column
 import org.apache.spark.ml.feature.StringIndexer
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.ml.feature.VectorIndexer
@@ -25,6 +26,12 @@ class Flights(spark: SparkSession, targetVariable: String) {
 	var assembler: VectorAssembler = null
 	var randomForestModel: Pipeline = null
 	var boostingTreesModel: Pipeline = null
+
+	//Evaluating the result
+	evaluator = new RegressionEvaluator()
+				.setLabelCol(targetVariable)
+				.setPredictionCol("prediction")
+				.setMetricName("rmse")
 
 
 	// Read all csv files with headers from hdfs.
@@ -91,19 +98,13 @@ class Flights(spark: SparkSession, targetVariable: String) {
 
 	}
 
-	def linearRegression(maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
+	def linearRegression(trainingData: DataFrame, maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
 	
 		//Defining the model
 		//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
 		assembler = new VectorAssembler()
-				.setInputCols(df.drop(targetVariable).columns)
+				.setInputCols(trainingData.drop(targetVariable).columns)
 				.setOutputCol("features")
-
-		//Evaluating the result
-		evaluator = new RegressionEvaluator()
-				.setLabelCol(targetVariable)
-				.setPredictionCol("prediction")
-				.setMetricName("rmse")
 
 		val lr = new LinearRegression()
 			.setFeaturesCol("features")
@@ -126,18 +127,12 @@ class Flights(spark: SparkSession, targetVariable: String) {
 			.setNumFolds(k)
 	}
 	
-	def randomForest(maxCategories: Int){
+	def randomForest(trainingData: DataFrame, maxCategories: Int){
 
 		//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
 		assembler = new VectorAssembler()
-				.setInputCols(df.drop(targetVariable).columns)
+				.setInputCols(trainingData.drop(targetVariable).columns)
 				.setOutputCol("features")
-
-		//Evaluating the result
-		evaluator = new RegressionEvaluator()
-				.setLabelCol(targetVariable)
-				.setPredictionCol("prediction")
-				.setMetricName("rmse")
 
 		//Vector Indexer to indicate that some variables are categorical, so they are treated properly by the algorithms
 		//In our case, DayOfWeek, Month, UniqueCarrier have less than 15 different classes, so they will be marked as categorical, as we want
@@ -155,18 +150,12 @@ class Flights(spark: SparkSession, targetVariable: String) {
 		
 	}
 
-	def boostingTrees(maxCategories: Int, maxIter: Int){
+	def boostingTrees(trainingData: DataFrame, maxCategories: Int, maxIter: Int){
 
 		//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
 		assembler = new VectorAssembler()
-				.setInputCols(df.drop(targetVariable).columns)
+				.setInputCols(trainingData.drop(targetVariable).columns)
 				.setOutputCol("features")
-
-		//Evaluating the result
-		evaluator = new RegressionEvaluator()
-				.setLabelCol(targetVariable)
-				.setPredictionCol("prediction")
-				.setMetricName("rmse")
 
 		var indexer = new VectorIndexer()
 				.setInputCol("features")
