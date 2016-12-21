@@ -67,7 +67,7 @@ object App {
 
 	//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable.
 	val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
-	flights.df = sIndexer.fit(flights.df).transform(df)
+	flights.df = sIndexer.fit(flights.df).transform(flights.df)
 
 	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
