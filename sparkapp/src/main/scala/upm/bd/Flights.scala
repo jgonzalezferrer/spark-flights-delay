@@ -22,6 +22,7 @@ class Flights(spark: SparkSession) {
 	var df: DataFrame = null
 	var linearRegressionModel: CrossValidator = null
 	var linearRegressionEvaluator: RegressionEvaluator = null
+	var assembler: VectorAssembler = null
 
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
@@ -94,12 +95,12 @@ class Flights(spark: SparkSession) {
 		df = carrierEncoder.transform(df)
 	}
 
-	def linearRegression(trainingData: DataFrame, testData: DataFrame, targetVariable: String, maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
+	def setAssembler(vassembler: VectorAssembler){
+		assembler = vassembler
+	}
 
-		val assemblerReg = new VectorAssembler()
-			.setInputCols(df.drop(targetVariable).columns)
-			.setOutputCol("features")		
-
+	def linearRegression(targetVariable: String, maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
+	
 		//Defining the model
 
 		val lr = new LinearRegression()
@@ -128,6 +129,38 @@ class Flights(spark: SparkSession) {
 			.setEstimatorParamMaps(paramGrid)
 			.setNumFolds(k)
 	}
+	/*
+	def randomForest(targetVariable: String, maxCategories: int){
+		//Vector Indexer to indicate that some variables are categorical, so they are treated properly by the algorithms
+		//In our case, DayOfWeek, Month, UniqueCarrier have less than 15 different classes, so they will be marked as categorical, as we want
+		var indexer = new VectorIndexer()
+			.setInputCol("features")
+			.setOutputCol("indexed")
+			.setMaxCategories(maxCategories)
+
+		//Defining the model
+
+		val rf = new RandomForestRegressor()
+			.setLabelCol(targetVariable)
+			.setFeaturesCol("features")
+
+
+		//Pipeline of random forest: 
+
+		val randomTreesPipeline = new Pipeline().setStages(Array(assembler, indexer, rf))
+		//Fitting the model to our data
+		val RTModel = randomTreesPipeline.fit(trainingData)
+		//Making predictions
+		predictions = RTModel.transform(testData)
+
+		//Ealuating the result of the predictions
+		evaluator = new RegressionEvaluator()
+		.setLabelCol(targetVariable)
+		.setPredictionCol("prediction")
+		.setMetricName("rmse")
+
+		val rmseRandom = evaluator.evaluate(predictions)
+	}*/
 
 
 }

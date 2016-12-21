@@ -79,8 +79,17 @@ object App {
 	// Split the data into training and test sets (30% held out for testing).
 	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
+	target = "ArrDelay"
+
+	// Set assembler
+	val assembler = new VectorAssembler()
+			.setInputCols(df.drop(targetVariable).columns)
+			.setOutputCol("features")	
+	
+	flights.setAssembler(assembler)
+
 	// Linear Regression
-	flights.linearRegression(trainingData, testData, "ArrDelay", 100, 1, 3, Array(0.1, 1.0, 10.0))
+	flights.linearRegression(targetVariable, 100, 1, 3, Array(0.1, 1.0, 10.0))
 	
 	val rModel = flights.linearRegressionModel.fit(trainingData)
 	val predictions = rModel.transform(testData)
