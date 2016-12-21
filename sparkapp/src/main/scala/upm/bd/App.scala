@@ -65,6 +65,10 @@ object App {
 	// TODO: remove this
 	flights.df = flights.df.sample(false, 0.005, 100) // Last parameter is the seed
 
+	//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable.
+	val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
+	flights.df = sIndexer.fit(flights.df).transform(df)
+
 	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
 						.drop("CancellationCode").drop("FlightNum")
@@ -85,7 +89,7 @@ object App {
 	val carrierEncoder = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
 
 	// Just for regression
-	flights.df= dayEncoder.transform(flights.df)
+	flights.df = dayEncoder.transform(flights.df)
 	flights.df = monthEncoder.transform(flights.df)
 	flights.df = carrierEncoder.transform(flights.df)
 
@@ -111,6 +115,7 @@ object App {
 							.drop("dummyMonth").drop("dummyUniqueCarrierInt")
 	testData = testData.drop("dummyDayOfWeek")
 							.drop("dummyMonth").drop("dummyUniqueCarrierInt")
+
 
 	// Random Forest
 	flights.randomForest(trainingData, 15)
