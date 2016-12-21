@@ -38,6 +38,7 @@ object App {
 	flights.variablesTransformation()
 
 	/* Adding new variables */
+	/*
 	val airportsDF = spark.read
 		.format("com.databricks.spark.csv")
 		.option("header", "true")
@@ -46,7 +47,6 @@ object App {
 				col("lat").cast(DoubleType),
 				col("long").cast(DoubleType))
 
-	/*
 	// New columns: lat and long of the Origin airports.
 	flights.df = flights.df.join(airportsDF, flights.df("Origin") === airportsDF("iata"))
 				.withColumnRenamed("lat", "OriginLat")
@@ -59,7 +59,7 @@ object App {
 				.withColumnRenamed("long", "DestLong")
 				.drop("iata")
 	
-
+				*/
 	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
 						.drop("CancellationCode").drop("FlightNum")
@@ -67,7 +67,7 @@ object App {
 						.drop("Month").drop("UniqueCarrier")
 						.drop("UniqueCarrierInt")
 						.drop("Origin").drop("Dest")
-*/
+
 
 	/* Null treatment */
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
@@ -100,8 +100,7 @@ object App {
 
 
 	// Linear Regression
-	val param = Array(0.1, 1.0)
-	flights.linearRegression(targetVariable, 100, 1, 3, Array(0.1, 1.0))	
+	flights.linearRegression(targetVariable, 100, 1, 3, Array(0.1, 1.0, 10.0))	
 	val lrModel = flights.linearRegressionModel.fit(trainingData)
 	val lrPredictions = lrModel.transform(testData)
 	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
