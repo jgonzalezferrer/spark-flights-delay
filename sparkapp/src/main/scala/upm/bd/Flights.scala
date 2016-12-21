@@ -20,7 +20,7 @@ class Flights(spark: SparkSession) {
 	import spark.implicits._
 
 	var df: DataFrame = null
-	var linearRegressionModel: LinearRegression = null
+	var linearRegressionModel: CrossValidator = null
 	var linearRegressionEvaluator: RegressionEvaluator = null
 
 	// Read all csv files with headers from hdfs.
@@ -112,12 +112,10 @@ class Flights(spark: SparkSession) {
 		val regressionPipeline = new Pipeline().setStages(Array(assemblerReg, lr))
 
 		//Evaluating the result
-		var evaluator = new RegressionEvaluator()
-			.setLabelCol("ArrDelay")
+		linearRegressionEvaluator = new RegressionEvaluator()
+			.setLabelCol(targetVariable)
 			.setPredictionCol("prediction")
 			.setMetricName("rmse")
-
-		linearRegressionEvaluator = evaluator
 
 		//To tune the parameters of the model
 		var paramGrid = new ParamGridBuilder()
@@ -128,7 +126,7 @@ class Flights(spark: SparkSession) {
 			.setEstimator(regressionPipeline)
 			.setEvaluator(evaluator)
 			.setEstimatorParamMaps(paramGrid)
-			.setNumFolds(3)
+			.setNumFolds(k)
 	}
 
 
