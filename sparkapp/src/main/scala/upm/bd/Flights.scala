@@ -8,11 +8,9 @@ class Flights(spark: SparkSession, datasetPath: String) {
 
 	import spark.implicits._
 
-	public DataFrame flights;	
-
-	// Read all csv files with headers from hdfs.
+		// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
-	flights = spark.read
+	val flights = spark.read
 		.format("com.databricks.spark.csv")
 		.option("header", "true")
 		//.load("hdfs://"+args(0)+"*.csv")

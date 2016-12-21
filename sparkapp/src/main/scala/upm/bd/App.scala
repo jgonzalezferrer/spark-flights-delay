@@ -29,7 +29,7 @@ object App {
  
 	import spark.implicits._
 
-	flightsDF = new Flights(spark, "hdfs:///project/flights/*.csv")
+	var flightsDF = new Flights(spark, "hdfs:///project/flights/*.csv")
 	flightsDF.flights.printSchema	
  }
 }
