@@ -9,7 +9,7 @@ class Flights(spark: SparkSession) {
 
 	import spark.implicits._
 
-	private var flights: DataFrame = null
+	public var flights: DataFrame = null
 
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
@@ -18,7 +18,7 @@ class Flights(spark: SparkSession) {
 		.format("com.databricks.spark.csv")
 		.option("header", "true")
 		//.load("hdfs://"+args(0)+"*.csv")
-		.load(datasetPath)
+		.load(hdfsPath)
 		.select(col("Year").cast(StringType),
 			col("Month").cast(StringType),
 			col("DayOfMonth").cast(StringType),
