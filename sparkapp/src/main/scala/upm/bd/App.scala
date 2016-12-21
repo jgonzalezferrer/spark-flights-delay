@@ -90,10 +90,10 @@ object App {
 	flights.df = carrierEncoder.transform(flights.df)
 
 	// Split the data into training and test sets (30% held out for testing).
-	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
+	var Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
-	trainingDataR = trainingData
-	testDataR = testData
+	var trainingDataR = trainingData
+	var testDataR = testData
 
 	trainingDataR = trainingDataR.drop("DayOfWeek")
 							.drop("Month").drop("UniqueCarrierInt")
