@@ -89,23 +89,37 @@ object App {
 	
 	flights.setAssembler(assembler)
 
+	//Evaluating the result
+	val evaluator = new RegressionEvaluator()
+			.setLabelCol(targetVariable)
+			.setPredictionCol("prediction")
+			.setMetricName("rmse")
+
+	flights.setEvaluator(evaluator)
+
+
 	// Linear Regression
 	flights.linearRegression(targetVariable, 100, 1, 3, Array(0.1, 1.0, 10.0))	
-	val rModel = flights.linearRegressionModel.fit(trainingData)
-	val predictions = rModel.transform(testData)
-	val rmseRegression = flights.linearRegressionEvaluator.evaluate(predictions)
-	println(rmseRegression)
-
-	/*
+	val lrModel = flights.linearRegressionModel.fit(trainingData)
+	val lrPredictions = lrModel.transform(testData)
+	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
+	
 	// Random Forest
 	flights.randomForest(targetVariable, 15)
-	//Fitting the model to our data
-	val RFModel = flights.randomForestModel.fit(trainingData)
-	//Making predictions
-	val RFpredictions = RFModel.transform(testData)
-	val rmseRandom = flights.linearRegressionEvaluator.evaluate(predictions)
-	println(rmseRandom)*/
+	val rfModel = flights.randomForestModel.fit(trainingData)
+	val rfPredictions = rfModel.transform(testData)
+	val rmseRandom = flights.evaluator.evaluate(rfPredictions)
 
+	//Boosting trees
+	flights.boostingTrees(targetVariable, 15, 10)
+	val btModel = flights.boostingTreesModel.fit(trainingData)
+	val btPredictions = btModel.transform(testData)
+	val rmseBoosting = flights.evaluator.evaluate(btPredictions)
+
+	println("rmse for different algorithms: ")
+	println("Linear regression = "+rmseRegression)
+	println("Random forests = "+rmseRandom)
+	println("Boosting trees = "+rmseBoosting)
 
 	}
 }

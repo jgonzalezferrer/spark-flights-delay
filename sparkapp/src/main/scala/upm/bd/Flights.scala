@@ -21,8 +21,10 @@ class Flights(spark: SparkSession) {
 
 	var df: DataFrame = null
 	var linearRegressionModel: CrossValidator = null
-	var linearRegressionEvaluator: RegressionEvaluator = null
+	var evaluator: RegressionEvaluator = null
 	var assembler: VectorAssembler = null
+	var randomForestModel: Pipeline = null
+	var boostingTreesModel: Pipeline = null
 
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
@@ -99,6 +101,12 @@ class Flights(spark: SparkSession) {
 		assembler = vassembler
 	}
 
+	def setEvaluator(vevaluator: RegressionEvaluator){
+		//Evaluating the result
+		evaluator = vevaluator
+
+	}
+
 	def linearRegression(targetVariable: String, maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
 	
 		//Defining the model
@@ -112,12 +120,6 @@ class Flights(spark: SparkSession) {
 		//Preparing the pipeline
 		val regressionPipeline = new Pipeline().setStages(Array(assembler, lr))
 
-		//Evaluating the result
-		linearRegressionEvaluator = new RegressionEvaluator()
-			.setLabelCol(targetVariable)
-			.setPredictionCol("prediction")
-			.setMetricName("rmse")
-
 		//To tune the parameters of the model
 		var paramGrid = new ParamGridBuilder()
 			.addGrid(lr.getParam("regParam"), hyperparameters)
@@ -125,11 +127,11 @@ class Flights(spark: SparkSession) {
 
 		linearRegressionModel = new CrossValidator()
 			.setEstimator(regressionPipeline)
-			.setEvaluator(linearRegressionEvaluator)
+			.setEvaluator(evaluator)
 			.setEstimatorParamMaps(paramGrid)
 			.setNumFolds(k)
 	}
-	/*
+	
 	def randomForest(targetVariable: String, maxCategories: int){
 		//Vector Indexer to indicate that some variables are categorical, so they are treated properly by the algorithms
 		//In our case, DayOfWeek, Month, UniqueCarrier have less than 15 different classes, so they will be marked as categorical, as we want
@@ -139,29 +141,30 @@ class Flights(spark: SparkSession) {
 			.setMaxCategories(maxCategories)
 
 		//Defining the model
-
 		val rf = new RandomForestRegressor()
 			.setLabelCol(targetVariable)
 			.setFeaturesCol("features")
 
+		randomForestModel = new Pipeline().setStages(Array(assembler, indexer, rf))
+		
+	}
 
-		//Pipeline of random forest: 
+	def boostingTrees(targetVariable: String, maxCategories: String, maxIter: String){
 
-		val randomTreesPipeline = new Pipeline().setStages(Array(assembler, indexer, rf))
-		//Fitting the model to our data
-		val RTModel = randomTreesPipeline.fit(trainingData)
-		//Making predictions
-		predictions = RTModel.transform(testData)
+		var indexer = new VectorIndexer()
+				.setInputCol("features")
+				.setOutputCol("indexed")
+				.setMaxCategories(maxCategories)
 
-		//Ealuating the result of the predictions
-		evaluator = new RegressionEvaluator()
-		.setLabelCol(targetVariable)
-		.setPredictionCol("prediction")
-		.setMetricName("rmse")
+		val gbt = new GBTRegressor()
+				.setLabelCol("ArrDelay")
+				.setFeaturesCol("features")
+				.setMaxIter(maxIter)
 
-		val rmseRandom = evaluator.evaluate(predictions)
-	}*/
-
+		//Pipeline to train and test the data with the boosting algorithm
+		boostingTreesModel = new Pipeline().setStages(Array(assembler, indexer, gbt))
+	
+	}
 
 }
 
