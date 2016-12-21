@@ -32,8 +32,12 @@ object App {
 	
 	/* Discarding data points */
 	//Drop rows with null values in the target variable	
-	flights.df.count
 	flights.df = flights.df.na.drop(Array("ArrDelay"))	
-	flights.df.count
+
+	/* Transformation of variables */
+	flights.variablesTransformation()
+	flights.df.printSchema
+
+	
  }
 }

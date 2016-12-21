@@ -39,5 +39,36 @@ class Flights(spark: SparkSession) {
 				col("Cancelled").cast(BooleanType),
 				col("CancellationCode").cast(StringType))
 	}
+
+	def variableTransformations(){
+		//Convert scheduled departure and arrival time to TimeStamp
+		df = dateToTimeStamp(df, "CRSDepTime")
+		df = dateToTimeStamp(df, "CRSArrTime")
+
+		// Normalize UNIX time, we take as reference point the earliest date in the database.
+		val timeStampReference = unix_timestamp(lit("01/01/1987"), "dd/MM/yy")
+		df = df.withColumn("CRSDepTime", $"CRSDepTime" - timeStampReference)
+		df = df.withColumn("CRSArrTime", $"CRSArrTime" - timeStampReference)
+
+		//Cast variables to Double deu to machine learning methods restrictions.
+		df = df.withColumn("DayOfMonth", col("DayOfMonth").cast(DoubleType))
+		df = df.withColumn("CRSDepTime", col("CRSDepTime").cast(DoubleType))
+		df = df.withColumn("CRSArrTime", col("CRSArrTime").cast(DoubleType))
+		df = df.withColumn("Year", col("Year").cast(DoubleType))
+		df = df.withColumn("Month", col("Month").cast(DoubleType))
+
+		//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable.
+		val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
+		df = sIndexer.fit(df).transform(df)
+
+		//OneHotEncoder to create dummy variables for carrier, month and day of the week 
+		//Linear regression needs them to handle those categorical variables properly.
+		val dayEncoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
+		val monthEncoder = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
+		val carrierEncoder = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
+		df = dayEncoder.transform(df)
+		df = monthEncoder.transform(df)
+		df = carrierEncoder.transform(df)
+	}
 }
 
