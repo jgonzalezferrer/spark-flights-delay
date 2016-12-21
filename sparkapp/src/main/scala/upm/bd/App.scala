@@ -172,11 +172,11 @@ val Array(trainingDataR, testDataR) = flightsDFReg.randomSplit(Array(0.7, 0.3), 
 
 //Defining the model
 
+
 val lr = new LinearRegression()
 .setFeaturesCol("features")
 .setLabelCol("ArrDelay")
 .setMaxIter(100)
-.setElasticNetParam(0.8)
 
 //Preparing the pipeline
 
@@ -192,6 +192,19 @@ var evaluator = new RegressionEvaluator()
   .setLabelCol("ArrDelay")
   .setPredictionCol("prediction")
   .setMetricName("rmse")
+
+//To tune the parameters of the model
+
+val paramGrid = new ParamGridBuilder()
+  .addGrid(lr.elasticNetParam, Array(0,0.5,1))
+  .addGrid(lr.regParam, Array(0, 1,10))
+  .build()
+
+val cv = new CrossValidator()
+  .setEstimator(regressionPipeline)
+  .setEvaluator(new BinaryClassificationEvaluator)
+  .setEstimatorParamMaps(paramGrid)
+  .setNumFolds(4)  // Use 3+ in practice
 
 val rmseRegression = evaluator.evaluate(predictions)
 
