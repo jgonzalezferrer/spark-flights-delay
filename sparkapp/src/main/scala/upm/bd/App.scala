@@ -14,6 +14,7 @@ import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
+import upm.db.Flights
 
 object App {
 
@@ -37,8 +38,14 @@ object App {
 	.appName("Spark Flights Delay")
 	.getOrCreate()
 
+ 
 	import spark.implicits._
 
+	flightsDF = new Flights(spark, hdfs:///project/flights/*.csv)
+	flightsDF.flights.printSchema
+
+
+	/*
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
 	val flightsOriginalDF = spark.read
@@ -85,7 +92,7 @@ object App {
 	flightsDF = flightsDF.withColumn("CRSDepTime", $"CRSDepTime" - timeStampReference)
 	flightsDF = flightsDF.withColumn("CRSArrTime", $"CRSArrTime" - timeStampReference)
 
-	//Cast variables to Double due to machine learning methods restrictions.
+	//Cast variables to Double deu to machine learning methods restrictions.
 	flightsDF = flightsDF.withColumn("DayOfMonth", col("DayOfMonth").cast(DoubleType))
 	flightsDF = flightsDF.withColumn("CRSDepTime", col("CRSDepTime").cast(DoubleType))
 	flightsDF = flightsDF.withColumn("CRSArrTime", col("CRSArrTime").cast(DoubleType))
@@ -281,5 +288,7 @@ object App {
 	println("Random forests = "+rmseRandom)
 	println("Boosting trees = "+rmseBoosintg)
 	spark.stop()
+
+	*/
 }
 
