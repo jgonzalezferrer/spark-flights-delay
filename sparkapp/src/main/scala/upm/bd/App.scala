@@ -52,14 +52,14 @@ object App {
 				.withColumnRenamed("long", "OriginLong")
 				.drop("iata")
 
-				/*
+				
 	flights.df = flights.df.join(airportsDF, flights.df("Dest") === airportsDF("iata"))
 				.withColumnRenamed("lat", "DestLat")
 				.withColumnRenamed("long", "DestLong")
 				.drop("iata")
 	
 
-	 Discarding unused variables */
+	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
 						.drop("CancellationCode").drop("FlightNum")
 						.drop("TailNum").drop("DayOfWeek")
