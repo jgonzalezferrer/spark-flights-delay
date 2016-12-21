@@ -77,6 +77,7 @@ object App {
 	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
 	flights.linearRegression(trainingData, testData, "ArrDelay", 100, 1, 2, Array(0.1))
+	println(flights.rsme)
 	
  }
 }
