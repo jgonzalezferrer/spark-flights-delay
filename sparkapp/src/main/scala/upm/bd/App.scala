@@ -104,11 +104,9 @@ object App {
 	val dayEncoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
 	val monthEncoder = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
 	val carrierEncoder = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
-	
-	flightsDF = dayEncoder.transform(flightsDFReg)
-	flightsDF = monthEncoder.transform(flightsDFReg)
-	flightsDF = carrierEncoder.transform(flightsDFReg)
-
+	flightsDF = dayEncoder.transform(flightsDF)
+	flightsDF = monthEncoder.transform(flightsDF)
+	flightsDF = carrierEncoder.transform(flightsDF)
 
 	/* Adding new variables */
 	val airportsDF = spark.read
