@@ -83,7 +83,7 @@ object App {
 
 	//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
 	val assembler = new VectorAssembler()
-			.setInputCols(df.drop(targetVariable).columns)
+			.setInputCols(flights.df.drop(targetVariable).columns)
 			.setOutputCol("features")	
 	
 	flights.setAssembler(assembler)
