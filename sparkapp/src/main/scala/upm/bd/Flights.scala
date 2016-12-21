@@ -99,18 +99,6 @@ class Flights(spark: SparkSession, targetVariable: String) {
 		val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
 		df = sIndexer.fit(df).transform(df)
 
-		
-		//OneHotEncoder to create dummy variables for carrier, month and day of the week 
-		//Linear regression needs them to handle those categorical variables properly.
-		val dayEncoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
-		val monthEncoder = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
-		val carrierEncoder = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
-
-		// Just for regression
-	
-		df = dayEncoder.transform(df)
-		df = monthEncoder.transform(df)
-		df = carrierEncoder.transform(df)
 	}
 
 	def linearRegression(maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
