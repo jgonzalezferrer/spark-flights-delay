@@ -13,7 +13,7 @@ import org.apache.spark.ml.feature.OneHotEncoder
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
 import org.apache.spark.ml.Pipeline
-
+import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 
 object App {
 
@@ -177,8 +177,7 @@ val lr = new LinearRegression()
 .setFeaturesCol("features")
 .setLabelCol("ArrDelay")
 .setMaxIter(100)
-.setElasticNetParam(0.8)
-
+.setElasticNetParam(1)
 //Preparing the pipeline
 
 val regressionPipeline = new Pipeline().setStages(Array(assemblerReg, lr))
@@ -189,12 +188,11 @@ var evaluator = new RegressionEvaluator()
   .setLabelCol("ArrDelay")
   .setPredictionCol("prediction")
   .setMetricName("rmse")
-
 //To tune the parameters of the model
 
 val paramGrid = new ParamGridBuilder()
-  .addGrid(lr.getParam("elasticNetParam"), Array(0.1,0.5,1.0))
-//  .addGrid(lr.getParam("regParam"), Array(0.1, 1.0,10.0))
+  //.addGrid(lr.getParam("elasticNetParam"), Array(0.0,0.5,1.0))
+  .addGrid(lr.getParam("regParam"), Array(0.1, 1.0,10.0))
   .build()
 
 val cv = new CrossValidator()
