@@ -101,7 +101,7 @@ object App {
 
 	// Linear Regression
 	val param = Array(0.1, 1.0)
-	flights.linearRegression(targetVariable, 100, 1, 3, param)	
+	flights.linearRegression(targetVariable, 100, 1, 3, Array(0.1, 1.0))	
 	val lrModel = flights.linearRegressionModel.fit(trainingData)
 	val lrPredictions = lrModel.transform(testData)
 	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
