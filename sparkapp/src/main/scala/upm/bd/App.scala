@@ -74,10 +74,57 @@ object App {
 	/* Machine learning part */
 
 	// Split the data into training and test sets (30% held out for testing).
-	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
+	//val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
-	flights.linearRegression(trainingData, testData, "ArrDelay", 100, 1, 2, Array(0.1))
-	println(flights.rmse)
+	//flights.linearRegression(trainingData, testData, "ArrDelay", 100, 1, 2, Array(0.1))
+	var flightsDFReg = flights.df
+	val Array(trainingDataR, testDataR) = flightsDFReg.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
+
+	//We use different data name for this algorithm because of the dummy variables, they are different for the tree models.
+
+	val assemblerReg = new VectorAssembler()
+	.setInputCols(flightsDFReg.drop("ArrDelay").columns)
+	.setOutputCol("features")
+
+	//Defining the model
+
+
+	val lr = new LinearRegression()
+	.setFeaturesCol("features")
+	.setLabelCol("ArrDelay")
+	.setMaxIter(100)
+	.setElasticNetParam(1)
+	//Preparing the pipeline
+
+	val regressionPipeline = new Pipeline().setStages(Array(assemblerReg, lr))
+
+	//Evaluating the result
+
+	var evaluator = new RegressionEvaluator()
+	.setLabelCol("ArrDelay")
+	.setPredictionCol("prediction")
+	.setMetricName("rmse")
+	//To tune the parameters of the model
+
+	var paramGrid = new ParamGridBuilder()
+	//.addGrid(lr.getParam("elasticNetParam"), Array(0.0,0.5,1.0))
+	.addGrid(lr.getParam("regParam"), Array(0.1))
+	.build()
+
+	val cv = new CrossValidator()
+	.setEstimator(regressionPipeline)
+	.setEvaluator(evaluator)
+	.setEstimatorParamMaps(paramGrid)
+	.setNumFolds(3)
+
+	//Fitting the model to our data
+	val rModel = cv.fit(trainingDataR)
+	//Making predictions
+	var predictions  = rModel.transform(testDataR)
+
+
+	val rmseRegression = evaluator.evaluate(predictions)
+	println(rmseRegression)
 	
  }
 }
