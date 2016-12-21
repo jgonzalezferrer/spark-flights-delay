@@ -109,7 +109,7 @@ object App {
 	// Split the data into training and test sets (30% held out for testing).
 	val Array(trainingDataR, testDataR) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
-/*
+
 	// Linear Regression
 	flights.linearRegression(100, 1, 3, Array(0.1, 1.0))	
 	val lrModel = flights.linearRegressionModel.fit(trainingDataR)
@@ -117,7 +117,7 @@ object App {
 	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
 	
 	println("rmse for different algorithms: ")
-	println("Linear regression = "+rmseRegression)*/
+	println("Linear regression = "+rmseRegression)
 	println(trainingDataR.take(1))
 	println(trainingData.take(1))
 	println("Random forests = "+rmseRandom)

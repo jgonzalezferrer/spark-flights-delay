@@ -127,6 +127,18 @@ class Flights(spark: SparkSession, targetVariable: String) {
 	}
 	
 	def randomForest(maxCategories: Int){
+
+		//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
+		assembler = new VectorAssembler()
+				.setInputCols(df.drop(targetVariable).columns)
+				.setOutputCol("features")
+
+		//Evaluating the result
+		evaluator = new RegressionEvaluator()
+				.setLabelCol(targetVariable)
+				.setPredictionCol("prediction")
+				.setMetricName("rmse")
+
 		//Vector Indexer to indicate that some variables are categorical, so they are treated properly by the algorithms
 		//In our case, DayOfWeek, Month, UniqueCarrier have less than 15 different classes, so they will be marked as categorical, as we want
 		var indexer = new VectorIndexer()
@@ -144,6 +156,17 @@ class Flights(spark: SparkSession, targetVariable: String) {
 	}
 
 	def boostingTrees(maxCategories: Int, maxIter: Int){
+
+		//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
+		assembler = new VectorAssembler()
+				.setInputCols(df.drop(targetVariable).columns)
+				.setOutputCol("features")
+
+		//Evaluating the result
+		evaluator = new RegressionEvaluator()
+				.setLabelCol(targetVariable)
+				.setPredictionCol("prediction")
+				.setMetricName("rmse")
 
 		var indexer = new VectorIndexer()
 				.setInputCol("features")
