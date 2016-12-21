@@ -115,7 +115,7 @@ object App {
 	val btModel = flights.boostingTreesModel.fit(trainingData)
 	val btPredictions = btModel.transform(testData)
 	val rmseBoosting = flights.evaluator.evaluate(btPredictions)
-
+	println(trainingData.count)
 	println("rmse for different algorithms: ")
 	println("Linear regression = "+rmseRegression)
 	println("Random forests = "+rmseRandom)
