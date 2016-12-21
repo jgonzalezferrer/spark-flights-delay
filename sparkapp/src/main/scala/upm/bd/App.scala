@@ -47,7 +47,7 @@ object App {
 				col("long").cast(DoubleType))
 
 	// New columns: lat and long of the Origin airports.
-	flights.df = flights.df.join(airportsDF, flights.df("Origin") === airportsDF("iata"))
+	/*flights.df = flights.df.join(airportsDF, flights.df("Origin") === airportsDF("iata"))
 				.withColumnRenamed("lat", "OriginLat")
 				.withColumnRenamed("long", "OriginLong")
 				.drop("iata")
@@ -56,7 +56,7 @@ object App {
 				.withColumnRenamed("lat", "DestLat")
 				.withColumnRenamed("long", "DestLong")
 				.drop("iata")
-
+	*/
 
 	/* Discarding unused variables */
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
@@ -64,7 +64,8 @@ object App {
 						.drop("TailNum").drop("DayOfWeek")
 						.drop("Month").drop("UniqueCarrier")
 						.drop("UniqueCarrierInt")
-						.drop("Origin").drop("Dest") 
+						.drop("Origin").drop("Dest")
+
 
 	/* Null treatment */
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
