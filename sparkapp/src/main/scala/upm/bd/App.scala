@@ -64,7 +64,7 @@ object App {
 
 	// TODO: remove this
 	flights.df = flights.df.sample(false, 0.005, 100) // Last parameter is the seed
-	
+
 	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
 						.drop("CancellationCode").drop("FlightNum")
@@ -73,10 +73,24 @@ object App {
 						.drop("Origin").drop("Dest")
 
 
-
 	/* Null treatment */
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
 	flights.df = flights.df.na.drop()
+
+	// Split the data into training and test sets (30% held out for testing).
+	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
+
+	// Random Forest
+	flights.randomForest(15)
+	val rfModel = flights.randomForestModel.fit(trainingData)
+	val rfPredictions = rfModel.transform(testData)
+	val rmseRandom = flights.evaluator.evaluate(rfPredictions)
+
+	//Boosting trees
+	flights.boostingTrees(15, 10)
+	val btModel = flights.boostingTreesModel.fit(trainingData)
+	val btPredictions = btModel.transform(testData)
+	val rmseBoosting = flights.evaluator.evaluate(btPredictions)
 
 	//OneHotEncoder to create dummy variables for carrier, month and day of the week 
 	//Linear regression needs them to handle those categorical variables properly.
@@ -85,7 +99,6 @@ object App {
 	val carrierEncoder = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
 
 	// Just for regression
-
 	flights.df = dayEncoder.transform(flights.df)
 	flights.df = monthEncoder.transform(flights.df)
 	flights.df = carrierEncoder.transform(flights.df)
@@ -98,29 +111,19 @@ object App {
 	/* Machine learning part */
 
 	// Split the data into training and test sets (30% held out for testing).
-	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
+	val Array(trainingDataR, testDataR) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
 
 	// Linear Regression
 	flights.linearRegression(100, 1, 3, Array(0.1, 1.0))	
-	val lrModel = flights.linearRegressionModel.fit(trainingData)
-	val lrPredictions = lrModel.transform(testData)
+	val lrModel = flights.linearRegressionModel.fit(trainingDataR)
+	val lrPredictions = lrModel.transform(testDataR)
 	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
-	/*
-	// Random Forest
-	flights.randomForest(15)
-	val rfModel = flights.randomForestModel.fit(trainingData)
-	val rfPredictions = rfModel.transform(testData)
-	val rmseRandom = flights.evaluator.evaluate(rfPredictions)
-
-	//Boosting trees
-	flights.boostingTrees(15, 10)
-	val btModel = flights.boostingTreesModel.fit(trainingData)
-	val btPredictions = btModel.transform(testData)
-	val rmseBoosting = flights.evaluator.evaluate(btPredictions)*/
-	println(trainingData.count)
+	
 	println("rmse for different algorithms: ")
 	println("Linear regression = "+rmseRegression)
+	println(trainingDataR.take(1))
+	println(trainingData.take(1))
 	/*println("Random forests = "+rmseRandom)
 	println("Boosting trees = "+rmseBoosting)*/
 
