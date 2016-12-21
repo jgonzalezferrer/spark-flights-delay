@@ -126,7 +126,7 @@ class Flights(spark: SparkSession) {
 			.setEstimator(regressionPipeline)
 			.setEvaluator(linearRegressionEvaluator)
 			.setEstimatorParamMaps(paramGrid)
-			.setNumFolds(k)
+			.setNumFolds(3)
 	}
 
 
