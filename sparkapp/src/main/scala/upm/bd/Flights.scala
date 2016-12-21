@@ -50,6 +50,17 @@ class Flights(spark: SparkSession) {
 				col("CancellationCode").cast(StringType))
 	}
 
+	/* 
+	* Transform a date in "dd/MM/yyyy HHmm" format to Unix TimeStamp 
+	* Input: columnName -> name of the column to transform
+	* Return: new dataframe
+	*/
+	def dateToTimeStamp(df: org.apache.spark.sql.DataFrame, columnName: String) : org.apache.spark.sql.DataFrame = {
+	return df.withColumn(columnName, 
+		unix_timestamp(concat(col("DayOfMonth"), lit("/"), col("Month"), lit("/"), col("Year"), lit(" "), col(columnName)), 
+			"dd/MM/yyyy HHmm"))
+	}  
+
 	def variablesTransformation(){
 		//Convert scheduled departure and arrival time to TimeStamp
 		df = dateToTimeStamp(df, "CRSDepTime")
