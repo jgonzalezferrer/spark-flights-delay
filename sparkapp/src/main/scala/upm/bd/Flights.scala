@@ -110,7 +110,7 @@ class Flights(spark: SparkSession) {
 			.setElasticNetParam(elasticNetParameter)
 
 		//Preparing the pipeline
-		val regressionPipeline = new Pipeline().setStages(Array(assemblerReg, lr))
+		val regressionPipeline = new Pipeline().setStages(Array(assembler, lr))
 
 		//Evaluating the result
 		linearRegressionEvaluator = new RegressionEvaluator()
