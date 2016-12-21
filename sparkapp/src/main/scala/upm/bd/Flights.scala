@@ -20,7 +20,7 @@ class Flights(spark: SparkSession) {
 	import spark.implicits._
 
 	var df: DataFrame = null
-	var rmse: Double = null
+	var rmse: Double = 0
 
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
