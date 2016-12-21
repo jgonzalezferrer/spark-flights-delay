@@ -181,10 +181,6 @@ val lr = new LinearRegression()
 //Preparing the pipeline
 
 val regressionPipeline = new Pipeline().setStages(Array(assemblerReg, lr))
-//Fitting the model to our data
-val rModel = regressionPipeline.fit(trainingDataR)
-//Making predictions
-var predictions  = rModel.transform(testDataR)
 
 //Evaluating the result
 
@@ -202,9 +198,15 @@ val paramGrid = new ParamGridBuilder()
 
 val cv = new CrossValidator()
   .setEstimator(regressionPipeline)
-  .setEvaluator(new BinaryClassificationEvaluator)
+  .setEvaluator(evaluator)
   .setEstimatorParamMaps(paramGrid)
-  .setNumFolds(4)  // Use 3+ in practice
+  .setNumFolds(4)
+
+//Fitting the model to our data
+val rModel = cv.fit(trainingDataR)
+//Making predictions
+var predictions  = rModel.transform(testDataR)
+
 
 val rmseRegression = evaluator.evaluate(predictions)
 
