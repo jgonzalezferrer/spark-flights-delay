@@ -39,9 +39,6 @@ object App {
 
 	import spark.implicits._
 
-	// TODO: Change it as a program parameter.
-	val project = "/project"
-
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
 	val flightsOriginalDF = spark.read
@@ -132,10 +129,11 @@ object App {
 
 	/* Discarding unused variables */
 	flightsDF = flightsDF.drop("DepTime").drop("Cancelled")
-						 .drop("CancellationCode").drop("FlightNum")
-						 .drop("TailNum")drop("DayOfWeek")
-						 .drop("Month").drop("UniqueCarrierInt")
-						 .drop("Origin").drop("Dest") 
+						.drop("CancellationCode").drop("FlightNum")
+						.drop("TailNum").drop("DayOfWeek")
+						.drop("Month").drop("UniqueCarrier")
+						.drop("UniqueCarrierInt")
+						.drop("Origin").drop("Dest") 
 
 	/* Null treatment */
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
