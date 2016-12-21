@@ -95,46 +95,51 @@ class Flights(spark: SparkSession) {
 
 	def linearRegression(trainingData: DataFrame, testData: DataFrame, targetVariable: String, maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
 
-		val assemblerReg = new VectorAssembler()
-			.setInputCols(df.drop(targetVariable).columns)
-			.setOutputCol("features")		
+	val Array(trainingDataR, testDataR) = df.randomSplit(Array(0.7, 0.3), 100) 
 
-		//Defining the model
+	val assemblerReg = new VectorAssembler()
+	.setInputCols(flightsDFReg.drop("ArrDelay").columns)
+	.setOutputCol("features")
 
-		val lr = new LinearRegression()
-			.setFeaturesCol("features")
-			.setLabelCol(targetVariable)
-			.setMaxIter(maxIter)
-			.setElasticNetParam(elasticNetParameter)
+	//Defining the model
 
-		//Preparing the pipeline
-		val regressionPipeline = new Pipeline().setStages(Array(assemblerReg, lr))
 
-		//Evaluating the result
-		var evaluator = new RegressionEvaluator()
-			.setLabelCol("ArrDelay")
-			.setPredictionCol("prediction")
-			.setMetricName("rmse")
+	val lr = new LinearRegression()
+	.setFeaturesCol("features")
+	.setLabelCol("ArrDelay")
+	.setMaxIter(100)
+	.setElasticNetParam(1)
+	//Preparing the pipeline
 
-		//To tune the parameters of the model
-		var paramGrid = new ParamGridBuilder()
-			.addGrid(lr.getParam("regParam"), hyperparameters)
-			.build()
+	val regressionPipeline = new Pipeline().setStages(Array(assemblerReg, lr))
 
-		val cv = new CrossValidator()
-			.setEstimator(regressionPipeline)
-			.setEvaluator(evaluator)
-			.setEstimatorParamMaps(paramGrid)
-			.setNumFolds(k)
+	//Evaluating the result
 
-		//Fitting the model to our data
-		val rModel = cv.fit(trainingData)
-		//Making predictions
-		var predictions  = rModel.transform(testData)
+	var evaluator = new RegressionEvaluator()
+	.setLabelCol("ArrDelay")
+	.setPredictionCol("prediction")
+	.setMetricName("rmse")
+	//To tune the parameters of the model
 
-		val rmseRegression = evaluator.evaluate(predictions)
+	var paramGrid = new ParamGridBuilder()
+	//.addGrid(lr.getParam("elasticNetParam"), Array(0.0,0.5,1.0))
+	.addGrid(lr.getParam("regParam"), Array(0.1))
+	.build()
 
-		rmse = rmseRegression
+	val cv = new CrossValidator()
+	.setEstimator(regressionPipeline)
+	.setEvaluator(evaluator)
+	.setEstimatorParamMaps(paramGrid)
+	.setNumFolds(3)
+
+	//Fitting the model to our data
+	val rModel = cv.fit(trainingDataR)
+	//Making predictions
+	var predictions  = rModel.transform(testDataR)
+
+
+	val rmseRegression = evaluator.evaluate(predictions)
+	rmse = rmseRegression
 	}
 }
 
