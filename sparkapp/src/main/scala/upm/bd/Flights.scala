@@ -92,10 +92,6 @@ class Flights(spark: SparkSession, targetVariable: String) {
 		df = df.withColumn("Year", col("Year").cast(DoubleType))
 		df = df.withColumn("Month", col("Month").cast(DoubleType))
 
-		//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable.
-		val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
-		df = sIndexer.fit(df).transform(df)
-
 	}
 
 	def linearRegression(trainingData: DataFrame, maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
