@@ -79,9 +79,9 @@ object App {
 	// Split the data into training and test sets (30% held out for testing).
 	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
-	target = "ArrDelay"
+	val targetVariable = "ArrDelay"
 
-	// Set assembler
+	//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
 	val assembler = new VectorAssembler()
 			.setInputCols(df.drop(targetVariable).columns)
 			.setOutputCol("features")	
