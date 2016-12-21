@@ -70,8 +70,14 @@ object App {
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
 	flights.df = flights.df.na.drop()
 
-	flights.df.show(false)
+	flights.df.sample(false, 0.005, 100) // Last parameter is the seed
 
+	/* Machine learning part */
+
+	// Split the data into training and test sets (30% held out for testing).
+	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
+
+	flights.linearRegression(trainingData, testData, "ArrDelay", 100, 1, 3, Array(0.1, 1.0,10.0))
 	
  }
 }

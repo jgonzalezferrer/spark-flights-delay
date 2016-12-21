@@ -91,5 +91,49 @@ class Flights(spark: SparkSession) {
 		df = monthEncoder.transform(df)
 		df = carrierEncoder.transform(df)
 	}
+
+	def linearRegression(trainingData: DataFrame, testData: DataFrame, targetVariable: String, maxIter: Int, elasticNetParameter: Int, k: Int, hyperparameters: Array[Double]){ 
+
+		val assemblerReg = new VectorAssembler()
+			.setInputCols(df.drop(targetVariable).columns)
+			.setOutputCol("features")		
+
+		//Defining the model
+
+		val lr = new LinearRegression()
+			.setFeaturesCol("features")
+			.setLabelCol(targetVariable)
+			.setMaxIter(maxIter)
+			.setElasticNetParam(elasticNetParameter)
+
+		//Preparing the pipeline
+		val regressionPipeline = new Pipeline().setStages(Array(assemblerReg, lr))
+
+		//Evaluating the result
+		var evaluator = new RegressionEvaluator()
+			.setLabelCol("ArrDelay")
+			.setPredictionCol("prediction")
+			.setMetricName("rmse")
+
+		//To tune the parameters of the model
+		var paramGrid = new ParamGridBuilder()
+			.addGrid(lr.getParam("regParam"), hyperparameters)
+			.build()
+
+		val cv = new CrossValidator()
+			.setEstimator(regressionPipeline)
+			.setEvaluator(evaluator)
+			.setEstimatorParamMaps(paramGrid)
+			.setNumFolds(k)
+
+		//Fitting the model to our data
+		val rModel = cv.fit(trainingData)
+		//Making predictions
+		var predictions  = rModel.transform(testData)
+
+		val rmseRegression = evaluator.evaluate(predictions)
+
+		println(rmseRegression)
+	}
 }
 
