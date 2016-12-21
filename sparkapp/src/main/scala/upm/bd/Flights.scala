@@ -9,7 +9,7 @@ class Flights(spark: SparkSession) {
 
 	import spark.implicits._
 
-	public var flights: DataFrame = null
+	var flights: DataFrame = null
 
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
