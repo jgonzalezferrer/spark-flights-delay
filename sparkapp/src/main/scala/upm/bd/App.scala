@@ -47,7 +47,7 @@ object App {
 				col("long").cast(DoubleType))
 
 	// New columns: lat and long of the Origin airports.
-	/*flights.df = flights.df.join(airportsDF, flights.df("Origin") === airportsDF("iata"))
+	flights.df = flights.df.join(airportsDF, flights.df("Origin") === airportsDF("iata"))
 				.withColumnRenamed("lat", "OriginLat")
 				.withColumnRenamed("long", "OriginLong")
 				.drop("iata")
@@ -56,7 +56,7 @@ object App {
 				.withColumnRenamed("lat", "DestLat")
 				.withColumnRenamed("long", "DestLong")
 				.drop("iata")
-	*/
+	
 
 	/* Discarding unused variables */
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
@@ -71,12 +71,16 @@ object App {
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
 	flights.df = flights.df.na.drop()
 
+	// TODO: remove this
 	flights.df = flights.df.sample(false, 0.0005, 100) // Last parameter is the seed
+
 	/* Machine learning part */
 
 	// Split the data into training and test sets (30% held out for testing).
 	val Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
-	flights.linearRegression(trainingData, testData, "ArrDelay", 100, 1, 2, Array(0.1))
+
+	// Linear Regression
+	flights.linearRegression(trainingData, testData, "ArrDelay", 100, 1, 3, Array(0.1, 1.0, 10.0))
 	
 	val rModel = flights.linearRegressionModel.fit(trainingData)
 	val predictions = rModel.transform(testData)
