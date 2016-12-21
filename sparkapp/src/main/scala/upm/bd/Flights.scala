@@ -132,7 +132,7 @@ class Flights(spark: SparkSession) {
 			.setNumFolds(k)
 	}
 	
-	def randomForest(targetVariable: String, maxCategories: int){
+	def randomForest(targetVariable: String, maxCategories: Int){
 		//Vector Indexer to indicate that some variables are categorical, so they are treated properly by the algorithms
 		//In our case, DayOfWeek, Month, UniqueCarrier have less than 15 different classes, so they will be marked as categorical, as we want
 		var indexer = new VectorIndexer()
@@ -149,7 +149,7 @@ class Flights(spark: SparkSession) {
 		
 	}
 
-	def boostingTrees(targetVariable: String, maxCategories: String, maxIter: String){
+	def boostingTrees(targetVariable: String, maxCategories: Int, maxIter: Int){
 
 		var indexer = new VectorIndexer()
 				.setInputCol("features")
