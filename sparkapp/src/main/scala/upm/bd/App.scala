@@ -124,8 +124,8 @@ object App {
 	println("Linear regression = "+rmseRegression)
 	println(trainingDataR.take(1))
 	println(trainingData.take(1))
-	/*println("Random forests = "+rmseRandom)
-	println("Boosting trees = "+rmseBoosting)*/
+	println("Random forests = "+rmseRandom)
+	println("Boosting trees = "+rmseBoosting)
 
 	}
 }
