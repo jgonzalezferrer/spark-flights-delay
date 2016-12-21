@@ -26,16 +26,6 @@ class Flights(spark: SparkSession, targetVariable: String) {
 	var randomForestModel: Pipeline = null
 	var boostingTreesModel: Pipeline = null
 
-	//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
-	assembler = new VectorAssembler()
-			.setInputCols(df.drop(targetVariable).columns)
-			.setOutputCol("features")
-
-	//Evaluating the result
-	evaluator = new RegressionEvaluator()
-			.setLabelCol(targetVariable)
-			.setPredictionCol("prediction")
-			.setMetricName("rmse")
 
 	// Read all csv files with headers from hdfs.
 	// The valid columns are selected, casting them (the default type is String).
@@ -64,6 +54,17 @@ class Flights(spark: SparkSession, targetVariable: String) {
 				col("TaxiOut").cast(DoubleType),
 				col("Cancelled").cast(BooleanType),
 				col("CancellationCode").cast(StringType))
+
+		//Prepare the assembler that will transform the remaining variables to a feature vector for the ML algorithms
+		assembler = new VectorAssembler()
+				.setInputCols(df.drop(targetVariable).columns)
+				.setOutputCol("features")
+
+		//Evaluating the result
+		evaluator = new RegressionEvaluator()
+				.setLabelCol(targetVariable)
+				.setPredictionCol("prediction")
+				.setMetricName("rmse")
 	}
 
 	/* 
