@@ -62,7 +62,7 @@ object App {
 				.drop("iata")
 	
 	// TODO: remove this
-	flights.df = flights.df.sample(false, 0.5, 100) // Last parameter is the seed
+	//flights.df = flights.df.sample(false, 0., 100) // Last parameter is the seed
 
 	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
