@@ -137,7 +137,7 @@ object App {
 
 	println("Standard deviation of arrival delay = "+dStDev)
 	println("rmse for different algorithms: ")
-	println("Linear regression with best regularizer: "+bestRegularizer+"= "+rmseRegression)
+	println("Linear regression with best regularizer: "+bestRegularizer+" = "+rmseRegression)
 	println("Random forests = "+rmseRandom)
 	println("Boosting trees = "+rmseBoosting)
 
