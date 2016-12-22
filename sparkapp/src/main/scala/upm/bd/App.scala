@@ -153,7 +153,6 @@ object App {
 	 * On the other hand, the max number of iterations will be 100 since it usually converges quite fast, 
 	 * and the elastic net parameter is set to 1 (Lasso regularisation).
 	 */
-
 	val lrMaxNumIterations = 100
 	val elasticNetParameter = 1
 	val k = 3
