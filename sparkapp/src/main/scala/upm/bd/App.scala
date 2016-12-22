@@ -78,7 +78,7 @@ object App {
 
 	// We will take the standard deviation to use it as a baseline.
 	// We will compare the other methods againts this naive method.
-	val dStDev=flightsDF.select(stddev("ArrDelay")).take(1)(0)(0)
+	val dStDev = flights.df.select(stddev("ArrDelay")).take(1)(0)(0)
 	
 	/* Modification of variable to use them in the regression part */
 	//OneHotEncoder to create dummy variables for carrier, month and day of the week 
