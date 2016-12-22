@@ -157,7 +157,7 @@ object App {
 	val lrMaxNumIterations = 100
 	val elasticNetParameter = 1
 	val k = 3
-	regularisations = Array(0.1, 1.0, 10.0)
+	val regularisations = Array(0.1, 1.0, 10.0)
 	flights.linearRegression(trainingDataR, lrMaxNumIterations, elasticNetParameter, k, regularisations)
 
 	// Training the model	
