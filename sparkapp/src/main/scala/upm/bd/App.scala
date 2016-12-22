@@ -17,18 +17,20 @@ import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 
 object App {
 	def main(args : Array[String]) {
+
 	// Disabling debug option. 
 	Logger.getRootLogger().setLevel(Level.WARN)
 
 	val spark = SparkSession
-	.builder()
-	.appName("Spark Flights Delay")
-	.getOrCreate()
+			.builder()
+			.appName("Spark Flights Delay")
+			.getOrCreate()
  
 	import spark.implicits._
 
 	val targetVariable = "ArrDelay"
 	var flights = new Flights(spark, targetVariable)
+	// TODO: pass as a programme parameter
 	flights.load("hdfs:///project/flights/*.csv")
 	
 	/* Discarding data points */
@@ -38,8 +40,7 @@ object App {
 	/* Transformation of variables */
 	flights.variablesTransformation()
 
-	/* Adding new variables */
-	
+	/* Adding new variables */	
 	val airportsDF = spark.read
 		.format("com.databricks.spark.csv")
 		.option("header", "true")
@@ -60,14 +61,8 @@ object App {
 				.withColumnRenamed("long", "DestLong")
 				.drop("iata")
 	
-			
-
 	// TODO: remove this
-	flights.df = flights.df.sample(false, 0.005, 100) // Last parameter is the seed
-
-	//StringIndexer to transform the UniqueCarrier string to integer for using it as a categorical variable.
-	val sIndexer = new StringIndexer().setInputCol("UniqueCarrier").setOutputCol("UniqueCarrierInt")
-	flights.df = sIndexer.fit(flights.df).transform(flights.df)
+	flights.df = flights.df.sample(false, 0.25, 100) // Last parameter is the seed
 
 	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
@@ -81,58 +76,63 @@ object App {
 	// We discard all the rows with at least one null value since they represent a reasonably low amount (<1%).
 	flights.df = flights.df.na.drop()
 
+	// We will take the standard deviation to use it as a baseline.
+	// We will compare the other methods againts this naive method.
+	val dStDev=flightsDF.select(stddev("ArrDelay")).take(1)(0)(0)
 	
+	/* Modification of variable to use them in the regression part */
 	//OneHotEncoder to create dummy variables for carrier, month and day of the week 
-	//Linear regression needs them to handle those categorical variables properly.
 	val dayEncoder = new OneHotEncoder().setInputCol("DayOfWeek").setOutputCol("dummyDayOfWeek")
 	val monthEncoder = new OneHotEncoder().setInputCol("Month").setOutputCol("dummyMonth")
 	val carrierEncoder = new OneHotEncoder().setInputCol("UniqueCarrierInt").setOutputCol("dummyUniqueCarrier")
 
 	// Just for regression
+	//Linear regression needs these variables to handle those categorical variables properly.
 	flights.df = dayEncoder.transform(flights.df)
 	flights.df = monthEncoder.transform(flights.df)
 	flights.df = carrierEncoder.transform(flights.df)
 
+	/* Training and Test dataset */
 	// Split the data into training and test sets (30% held out for testing).
 	var Array(trainingData, testData) = flights.df.randomSplit(Array(0.7, 0.3), 100) // last parameter is the seed
 
+	/* Linear Regression */
+	// For regression, we will use the OneHotEncoder variables, for Random Forests and Boosting Trees we will use the original ones.
 	var trainingDataR = trainingData
 	var testDataR = testData
 
+	// Drop old variables.
 	trainingDataR = trainingDataR.drop("DayOfWeek")
 							.drop("Month").drop("UniqueCarrierInt")
-
 	testDataR = testDataR.drop("DayOfWeek")
 							.drop("Month").drop("UniqueCarrierInt")
 
-	// Linear Regression
-	flights.linearRegression(trainingDataR, 100, 1, 3, Array(0.1, 1.0))	
+	// Training the model
+	flights.linearRegression(trainingDataR, 100, 1, 3, Array(0.1, 1.0, 10.0))	
 	val lrModel = flights.linearRegressionModel.fit(trainingDataR)
 	val lrPredictions = lrModel.transform(testDataR)
 	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
 
+
+	// For Random forest and bosting trees, we discard the OneHotEncoder variables, keeping the old ones.
 	trainingData = trainingData.drop("dummyDayOfWeek")
 							.drop("dummyMonth").drop("dummyUniqueCarrierInt")
 	testData = testData.drop("dummyDayOfWeek")
 							.drop("dummyMonth").drop("dummyUniqueCarrierInt")
 
-
-	// Random Forest
+	/* Random Forest */
 	flights.randomForest(trainingData, 15)
 	val rfModel = flights.randomForestModel.fit(trainingData)
 	val rfPredictions = rfModel.transform(testData)
 	val rmseRandom = flights.evaluator.evaluate(rfPredictions)
 
-	//Boosting trees
+	/* Boosting trees */
 	flights.boostingTrees(trainingData, 15, 10)
 	val btModel = flights.boostingTreesModel.fit(trainingData)
 	val btPredictions = btModel.transform(testData)
 	val rmseBoosting = flights.evaluator.evaluate(btPredictions)
 
-	
-
-	
-	
+	println("Standard deviation of arrival delay = "+dStDev)
 	println("rmse for different algorithms: ")
 	println("Linear regression = "+rmseRegression)
 	println("Random forests = "+rmseRandom)
