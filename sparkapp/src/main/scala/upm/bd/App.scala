@@ -39,7 +39,7 @@ object App {
 	flights.variablesTransformation()
 
 	/* Adding new variables */
-	/*
+	
 	val airportsDF = spark.read
 		.format("com.databricks.spark.csv")
 		.option("header", "true")
@@ -60,7 +60,7 @@ object App {
 				.withColumnRenamed("long", "DestLong")
 				.drop("iata")
 	
-				*/
+			
 
 	// TODO: remove this
 	flights.df = flights.df.sample(false, 0.005, 100) // Last parameter is the seed
