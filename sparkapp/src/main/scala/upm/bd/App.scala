@@ -30,8 +30,9 @@ object App {
 
 	val targetVariable = "ArrDelay"
 	var flights = new Flights(spark, targetVariable)
-	// TODO: pass as a programme parameter
-	flights.load("hdfs:///project/flights/*.csv")
+
+	val datasetsPath = args[0]
+	flights.load("hdfs://"+datasetsPath)
 	
 	/* Discarding data points */
 	//Drop rows with null values in the target variable	
@@ -60,9 +61,6 @@ object App {
 				.withColumnRenamed("lat", "DestLat")
 				.withColumnRenamed("long", "DestLong")
 				.drop("iata")
-	
-	// TODO: remove this
-	//flights.df = flights.df.sample(false, 0., 100) // Last parameter is the seed
 
 	//Discarding unused variables 
 	flights.df = flights.df.drop("DepTime").drop("Cancelled")
@@ -110,6 +108,11 @@ object App {
 	// Training the model
 	flights.linearRegression(trainingDataR, 100, 1, 3, Array(0.1, 1.0, 10.0))	
 	val lrModel = flights.linearRegressionModel.fit(trainingDataR)
+
+	// Retrieving the best model tuning selection.
+	val pipeline = lrModel.bestModel.asInstanceOf[PipelineModel]
+	val bestRegularizer = pipeline.stages(1).asInstanceOf[LinearRegressionModel].getRegParam
+
 	val lrPredictions = lrModel.transform(testDataR)
 	val rmseRegression = flights.evaluator.evaluate(lrPredictions)
 
@@ -134,7 +137,7 @@ object App {
 
 	println("Standard deviation of arrival delay = "+dStDev)
 	println("rmse for different algorithms: ")
-	println("Linear regression = "+rmseRegression)
+	println("Linear regression with best regularizer: "+bestRegularizer+"= "+rmseRegression)
 	println("Random forests = "+rmseRandom)
 	println("Boosting trees = "+rmseBoosting)
 
