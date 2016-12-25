@@ -4,3 +4,4 @@
 metastore_db
 metastore_db/*
 *.log
+report/
