@@ -21,7 +21,7 @@ $ spark-submit --class upm.bd.App target/sparkapp-1.0-SNAPSHOT.jar /hdfs/path/to
 Machine Learning models
 ----------- 
 
-We have decided to implement three Machine Learning regression models. MLlib has a large set of machine learning methods and also provides the possibility to define [Pipelines](https://spark.apache.org/docs/2.0.2/ml-pipeline.html), which easily represent learning workflows composed of preprocessing steps, inference algorithms and validation of the data.
+After we took some decisions to select and transform the initial data, we have decided to implement three Machine Learning regression models. MLlib has a large set of machine learning methods and also provides the possibility to define [Pipelines](https://spark.apache.org/docs/2.0.2/ml-pipeline.html), which easily represent learning workflows composed of preprocessing steps, inference algorithms and validation of the data.
 
 * [Linear regression](https://spark.apache.org/docs/2.0.2/ml-classification-regression.html#linear-regression): which can be a good
 idea when dealing with a signfficant amount of continuous variables.
