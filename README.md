@@ -8,7 +8,7 @@ flight arrival delay, the variables that contain information only known after th
 Instructions on how to execute
 ----------- 
 First of all, it is necessary to execute the ````script.sh```` located in the data folder of the project. It will download
-and place in HDFS the external [airports.csv](ttp://stat-computing.org/dataexpo/2009/supplemental-data.html) dataset. This file is used internally in the project to create extra
+and place in HDFS the external [airports.csv](http://stat-computing.org/dataexpo/2009/supplemental-data.html) dataset. This file is used internally in the project to create extra
 variables.
 
 The whole Spark application has been developed and tested as a Maven project. The way to easily compile it is to be located in the project main folder and execute the ````mvn```` programme with the option package. Once compiled, run the Spark application using the ````spark-submit```` script located in the bin folder of your Spark module. The script must be called using one parameter: the hdfs location of the datasets.
